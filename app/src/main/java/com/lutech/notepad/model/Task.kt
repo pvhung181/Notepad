@@ -1,8 +1,10 @@
 package com.lutech.notepad.model
 
+import android.text.format.DateUtils
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.lutech.notepad.utils.formatDate
 import java.text.SimpleDateFormat
 import java.time.LocalDateTime
 import java.util.Date
@@ -22,7 +24,8 @@ data class Task(
     var content: String = "",
 
     @ColumnInfo(name = "last_edit")
-    var lastEdit: String = SimpleDateFormat("dd/M/yyyy hh:mm:ss").format(Date())
-) {
+    var lastEdit: String = formatDate(Date()),
 
-}
+    @ColumnInfo(name = "is_deleted")
+    var isDeleted: Boolean = false
+)

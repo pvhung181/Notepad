@@ -1,6 +1,7 @@
 package com.lutech.notepad.adapter
 
 import android.app.Activity
+import android.content.DialogInterface
 import android.content.Intent
 import android.os.Bundle
 import android.view.ActionMode
@@ -10,6 +11,7 @@ import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModelProvider
@@ -27,10 +29,9 @@ import com.lutech.notepad.ui.add.AddActivity
 import com.lutech.notepad.ui.home.HomeViewModel
 
 
-class TaskAdapter(
-    var tasks: MutableList<Task> = mutableListOf(),
-    val activity: Activity
-) : RecyclerView.Adapter<TaskAdapter.ViewHolder>() {
+class TaskDeletedAdapter(
+    var tasks: MutableList<Task> = mutableListOf(), val activity: Activity
+) : RecyclerView.Adapter<TaskDeletedAdapter.ViewHolder>() {
     var mainViewModel: HomeViewModel? = null
     var isEnable = false
     var isSelectAll = false
@@ -44,23 +45,20 @@ class TaskAdapter(
         val overlay: View = itemView.findViewById(id.view_overlay)
 
         fun setData(task: Task) {
-            title.text = if(task.title == "") "Untitled" else task.title
+            title.text = if (task.title == "") "Untitled" else task.title
             lastEdit.text = task.lastEdit
         }
 
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val view = LayoutInflater.from(parent.context)
-            .inflate(layout.task_item, parent, false)
+        val view = LayoutInflater.from(parent.context).inflate(layout.task_item, parent, false)
 
-        mainViewModel =
-            ViewModelProvider(activity as FragmentActivity)[HomeViewModel::class.java]
+        mainViewModel = ViewModelProvider(activity as FragmentActivity)[HomeViewModel::class.java]
 
 
         return ViewHolder(view)
     }
-
 
     override fun getItemId(position: Int): Long = position.toLong()
 
@@ -72,10 +70,9 @@ class TaskAdapter(
         holder.setData(tasks[position])
         holder.item.setOnLongClickListener {
             if (!isEnable) {
-                val callback: ActionMode.Callback = object : ActionMode.Callback {
+                val callback: ActionMode.Callback2 = object : ActionMode.Callback2() {
                     override fun onCreateActionMode(mode: ActionMode?, menu: Menu?): Boolean {
                         val inflater = mode?.menuInflater
-
                         inflater?.inflate(R.menu.select_menu, menu)
                         return true
                     }
@@ -140,19 +137,30 @@ class TaskAdapter(
             if (isEnable) {
                 clickItem(holder);
             } else {
-                val bundle = Bundle()
-                bundle.putInt(TASK_ID, tasks[position].id);
-                bundle.putString(TASK_TITLE, tasks[position].title)
-                bundle.putString(TASK_CONTENT, tasks[position].content)
-                bundle.putString(TASK_LAST_EDIT, tasks[position].lastEdit)
+                val builder = AlertDialog.Builder(activity)
+                var checkedItem = 0
+                builder.setTitle("Select an action for the note")
+                val listItems = arrayOf(
+                    "Restore",
+                    "Permanently delete",
+                )
 
-                val it = Intent(activity, AddActivity::class.java)
-                it.putExtra(TASK, bundle)
-                activity.startActivity(it)
+                val dialog = builder.setSingleChoiceItems(listItems, checkedItem) { dlg, which -> checkedItem = which
+                }
+                    .setNegativeButton("Cancel") { dlg, _ -> dlg.dismiss() }
+                    .setPositiveButton("OK") { dlg, _ ->
+                        if (checkedItem == 0) {
+                            mainViewModel?.restoreTask(tasks[position])
+                        } else {
+                            mainViewModel?.deleteTask(tasks[position])
+                        }
+                        dlg?.dismiss()
+                    }.create()
+                dialog.show()
             }
         }
 
-        holder.overlay.visibility = if(isSelectAll) View.VISIBLE else View.INVISIBLE
+        holder.overlay.visibility = if (isSelectAll) View.VISIBLE else View.INVISIBLE
     }
 
     fun setData(tasks: MutableList<Task>) {

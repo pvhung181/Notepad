@@ -4,7 +4,6 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lutech.notepad.database.AppDatabase
 import com.lutech.notepad.database.repository.TaskRepositoryImpl
@@ -32,13 +31,26 @@ class HomeViewModel(
         return mutableLiveData
     }
 
+    fun moveToTrash(task: Task) {
+        viewModelScope.launch {
+            repository.updateTask(task.copy(
+                isDeleted = true
+            ))
+        }
+    }
+
+    fun restoreTask(task: Task) {
+        viewModelScope.launch {
+            repository.updateTask(
+                task.copy(isDeleted = false)
+            )
+        }
+    }
+
     fun deleteTask(task: Task) {
         viewModelScope.launch {
             repository.deleteTask(task)
         }
     }
 
-    fun deleteMultipleTasks(tasks: List<Task>) {
-
-    }
 }

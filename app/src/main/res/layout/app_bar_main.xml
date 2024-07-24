@@ -17,11 +17,9 @@
 
             android:layout_height="?attr/actionBarSize"
             android:background="?attr/colorPrimary"
-            app:theme="@style/Theme.Notepad.PopupOverlay" />
-
-<!--        <include-->
-<!--            android:id="@+id/toolbar"-->
-<!--            layout="@layout/custom_tool_bar_layout"/>-->
+            app:theme="@style/Theme.Notepad.AppBarOverlay"
+            app:popupTheme="@style/Theme.Notepad.PopupOverlay"
+            />
 
     </com.google.android.material.appbar.AppBarLayout>
 

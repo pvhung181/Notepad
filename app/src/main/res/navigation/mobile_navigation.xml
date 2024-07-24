@@ -18,8 +18,8 @@
         tools:layout="@layout/fragment_backup" />
 
     <fragment
-        android:id="@+id/nav_slideshow"
-        android:name="com.lutech.notepad.ui.slideshow.SlideshowFragment"
-        android:label="@string/menu_slideshow"
-        tools:layout="@layout/fragment_slideshow" />
+        android:id="@+id/nav_trash"
+        android:name="com.lutech.notepad.ui.trash.TrashFragment"
+        android:label="@string/trash"
+        tools:layout="@layout/fragment_trash" />
 </navigation>

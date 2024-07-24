@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:id="@+id/note_item"
     android:layout_height="@dimen/_48sdp"
-    android:background="@color/customSecondary"
+    android:background="@drawable/round_border_shape"
     android:layout_marginBottom="@dimen/_4sdp"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
@@ -30,13 +30,23 @@
         />
 
     <TextView
+        android:id="@+id/last_edit_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/last_edit"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/task_last_edit"
+        android:layout_margin="@dimen/_4sdp"
+        android:textStyle="italic"/>
+
+    <TextView
         android:id="@+id/task_last_edit"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="last edit : xx/xx/xx, xx:xx am"
+        android:text="xx/xx/xx, xx:xx am"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginEnd="@dimen/_4sdp"
+        android:layout_margin="@dimen/_4sdp"
         android:textStyle="italic"/>
 
 

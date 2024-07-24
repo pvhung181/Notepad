@@ -9,6 +9,8 @@ import kotlinx.coroutines.flow.Flow
 interface TaskRepository {
     fun getAllTask(): LiveData<MutableList<Task>>
 
+    fun getAllDeletedNotes(): LiveData<MutableList<Task>>
+
     //fun getAllTasksNotTracking(): List<Task>
 
     suspend fun saveTask(task: Task)
@@ -25,6 +27,10 @@ class TaskRepositoryImpl(
 ) : TaskRepository {
     override fun getAllTask(): LiveData<MutableList<Task>> {
         return taskDao.getAll()
+    }
+
+    override fun getAllDeletedNotes(): LiveData<MutableList<Task>> {
+        return taskDao.getAllDeletedNotes()
     }
 
 //    override fun getAllTasksNotTracking(): List<Task> {

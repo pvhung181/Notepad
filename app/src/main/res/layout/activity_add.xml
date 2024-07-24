@@ -13,72 +13,15 @@
         app:layout_constraintTop_toTopOf="parent"
         android:layout_width="0dp"
         android:layout_height="?attr/actionBarSize">
-
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_gravity="center_vertical">
-
-
             <androidx.appcompat.widget.Toolbar
                 android:id="@+id/toolbar"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:background="@color/customPrimary">
-
+                android:background="@color/customPrimary"
+                app:theme="@style/Theme.Notepad.AppBarOverlay"
+                app:popupTheme="@style/Theme.Notepad.PopupOverlay"
+                >
             </androidx.appcompat.widget.Toolbar>
-
-            <ImageView
-                android:id="@+id/back_btn"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:tint="@color/white"
-                android:layout_width="@dimen/_24sdp"
-                android:layout_height="@dimen/_24sdp"
-                android:layout_marginStart="@dimen/_12sdp"
-                android:background="@color/transparent"
-                android:src="@drawable/back_ic" />
-
-            <TextView
-                android:id="@+id/app_name"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toEndOf="@id/back_btn"
-                app:layout_constraintTop_toTopOf="parent"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="@dimen/_6sdp"
-                android:text="@string/app_name"
-                android:textColor="@color/white"
-                android:textSize="@dimen/_18ssp"/>
-
-
-            <TextView
-                android:id="@+id/save"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@id/more_ic"
-                app:layout_constraintTop_toTopOf="parent"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="@dimen/_12sdp"
-                android:layout_marginEnd="@dimen/_12sdp"
-                android:text="@string/save"
-                android:textColor="@color/white"
-                android:textSize="@dimen/_18ssp" />
-
-
-            <ImageView
-                android:id="@+id/more_ic"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:tint="@color/white"
-                android:layout_width="@dimen/_24sdp"
-                android:layout_height="@dimen/_24sdp"
-                android:layout_marginStart="@dimen/_24sdp"
-                android:background="@color/transparent"
-                android:src="@drawable/more_ver_ic" />
-        </androidx.constraintlayout.widget.ConstraintLayout>
     </com.google.android.material.appbar.AppBarLayout>
 
     <LinearLayout

@@ -12,8 +12,11 @@ import com.lutech.notepad.model.Task
 
 @Dao
 interface TaskDao {
-    @Query("SELECT * FROM task")
+    @Query("SELECT * FROM task where is_deleted = 0")
     fun getAll(): LiveData<MutableList<Task>>
+
+    @Query("SELECT * FROM task where is_deleted = 1")
+    fun getAllDeletedNotes(): LiveData<MutableList<Task>>
 
     @Insert
     fun insertAll(vararg tasks: Task)

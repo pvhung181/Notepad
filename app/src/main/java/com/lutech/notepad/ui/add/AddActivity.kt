@@ -3,9 +3,12 @@ package com.lutech.notepad.ui.add
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuItem
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
+import androidx.appcompat.widget.Toolbar
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.get
@@ -23,6 +26,7 @@ import com.lutech.notepad.database.repository.TaskRepositoryImpl
 import com.lutech.notepad.databinding.ActivityAddBinding
 import com.lutech.notepad.model.Task
 import com.lutech.notepad.ui.backup.BackupViewModel
+import com.lutech.notepad.utils.formatDate
 import java.text.SimpleDateFormat
 import java.time.LocalDateTime
 import java.util.Date
@@ -30,20 +34,21 @@ import java.util.Date
 class AddActivity : AppCompatActivity() {
     lateinit var binding: ActivityAddBinding
     var isUpdate: Boolean = false
+    lateinit var toolbar: Toolbar
+    lateinit var addViewModel: AddViewModel
     var task: Task = Task()
 
-    @RequiresApi(Build.VERSION_CODES.O)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val addViewModel = ViewModelProvider(this).get(AddViewModel::class.java)
+        addViewModel = ViewModelProvider(this).get(AddViewModel::class.java)
         binding = ActivityAddBinding.inflate(layoutInflater)
         setContentView(binding.root)
         isUpdate = intent.getBundleExtra(TASK) != null
+        toolbar = binding.toolbar
 
 
-        binding.backBtn.setOnClickListener {
-            onBackPressedDispatcher.onBackPressed()
-        }
+
 
         if (isUpdate) {
             val bundle = intent.getBundleExtra(TASK)
@@ -59,13 +64,25 @@ class AddActivity : AppCompatActivity() {
         binding.titleEditText.setText(task.title)
         binding.contentEditText.setText(task.content)
 
+        binding.titleEditText.requestFocus()
 
-        binding.save.setOnClickListener {
+        setSupportActionBar(toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.activity_add_option_menu, menu)
+        return super.onCreateOptionsMenu(menu)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if(item.itemId == R.id.action_save) {
             task.title = binding.titleEditText.text.toString()
             task.content = binding.contentEditText.text.toString()
-            task.lastEdit = SimpleDateFormat("dd/M/yyyy hh:mm:ss").format(Date())
+            task.lastEdit = formatDate(Date())
             if (isUpdate) {
                 addViewModel.update(task)
+
                 Toast.makeText(this, "update successfully", Toast.LENGTH_SHORT).show()
                 finish()
             } else {
@@ -74,9 +91,15 @@ class AddActivity : AppCompatActivity() {
                 Toast.makeText(this, "Add successfully", Toast.LENGTH_SHORT).show()
                 clearInput()
             }
+        }
+        else if(item.itemId == R.id.activity_add_action_more) {
 
         }
+        else if(item.itemId == android.R.id.home) {
+            onBackPressedDispatcher.onBackPressed()
+        }
 
+        return super.onOptionsItemSelected(item)
     }
 
     private fun clearInput() {

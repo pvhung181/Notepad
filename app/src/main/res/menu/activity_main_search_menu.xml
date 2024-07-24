@@ -3,17 +3,13 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context=".MainActivity">
     <item
-        android:id="@+id/action_search"
+        android:id="@+id/activity_main_action_search"
         android:icon="@drawable/search_ic"
         android:orderInCategory="100"
         app:showAsAction="ifRoom|collapseActionView"
         android:title="@string/search"
         app:actionViewClass="com.google.android.material.search.SearchView" />
-    <item
-        android:id="@+id/action_sort"
-        android:orderInCategory="200"
-        android:title="@string/sort"
-        app:showAsAction="ifRoom" />
+
 
     <item
         android:id="@+id/action_more"
