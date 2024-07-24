@@ -11,6 +11,10 @@
         <item name="colorOnSecondary">@color/black</item>
         <!-- Status bar color. -->
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
+
+        <item name="windowActionModeOverlay">true</item>
+        <item name="android:actionModeBackground">@color/purple_500</item>
+
         <!-- Customize your theme here. -->
     </style>
 
@@ -21,5 +25,10 @@
 
     <style name="Theme.Notepad.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
 
-    <style name="Theme.Notepad.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+    <style name="Theme.Notepad.PopupOverlay" parent="ThemeOverlay.AppCompat.Light">
+        <item name="actionMenuTextColor">@color/white</item>
+        <item name="android:textColorPrimary">@color/white</item>
+        <item name="tint">@color/white</item>
+        <item name="iconTint">@color/white</item>
+    </style>
 </resources>

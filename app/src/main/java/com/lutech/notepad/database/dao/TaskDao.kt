@@ -13,7 +13,7 @@ import com.lutech.notepad.model.Task
 @Dao
 interface TaskDao {
     @Query("SELECT * FROM task")
-    fun getAll(): LiveData<List<Task>>
+    fun getAll(): LiveData<MutableList<Task>>
 
     @Insert
     fun insertAll(vararg tasks: Task)
@@ -25,5 +25,5 @@ interface TaskDao {
     suspend fun update(task: Task)
 
     @Delete
-    fun delete(task: Task)
+    suspend fun delete(task: Task)
 }

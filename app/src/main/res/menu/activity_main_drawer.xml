@@ -3,7 +3,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:showIn="navigation_view">
 
-    <group android:checkableBehavior="single">
+    <group
+        android:id="@+id/notepad_section"
+        android:checkableBehavior="single">
         <item
             android:id="@+id/nav_home"
             android:icon="@drawable/note_ic"
@@ -16,5 +18,12 @@
             android:id="@+id/nav_slideshow"
             android:icon="@drawable/trash_ic"
             android:title="@string/trash" />
+    </group>
+
+    <group >
+        <item
+            android:id="@+id/nav_setting"
+            android:icon="@drawable/setting_ic"
+            android:title="@string/settings" />
     </group>
 </menu>
