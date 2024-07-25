@@ -7,6 +7,7 @@
     tools:context=".MainActivity">
 
     <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/app_bar_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:theme="@style/Theme.Notepad.AppBarOverlay">
@@ -14,12 +15,46 @@
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
-
             android:layout_height="?attr/actionBarSize"
             android:background="?attr/colorPrimary"
             app:theme="@style/Theme.Notepad.AppBarOverlay"
             app:popupTheme="@style/Theme.Notepad.PopupOverlay"
             />
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/search_toolbar"
+            android:layout_width="match_parent"
+            android:visibility="gone"
+            android:layout_height="?attr/actionBarSize">
+            <ImageView
+                android:id="@+id/back_btn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/back_ic"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                android:layout_marginStart="@dimen/_12sdp"/>
+
+            <androidx.appcompat.widget.SearchView
+                android:id="@+id/search_field"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                app:layout_constraintHorizontal_weight="6"
+                app:layout_constraintStart_toEndOf="@+id/back_btn"
+                app:iconifiedByDefault="false"/>
+
+            <ImageView
+                android:id="@+id/more_btn"
+                android:clickable="true"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:src="@drawable/more_vert_ic"
+                android:layout_marginEnd="@dimen/_4sdp"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:focusable="true" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
     </com.google.android.material.appbar.AppBarLayout>
 

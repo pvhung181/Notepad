@@ -13,44 +13,9 @@ import kotlinx.coroutines.launch
 class HomeViewModel(
     application: Application
 ) : AndroidViewModel(application) {
-
-    private var mutableLiveData = MutableLiveData<String>()
-
     private val repository: TaskRepositoryImpl = TaskRepositoryImpl(AppDatabase.getDatabase(application).taskDao())
 
     private val _tasks = repository.getAllTask()
 
     val tasks: LiveData<MutableList<Task>> = _tasks
-
-
-    fun setText(s: String) {
-        mutableLiveData.value = s
-    }
-
-    fun getText(): MutableLiveData<String> {
-        return mutableLiveData
-    }
-
-    fun moveToTrash(task: Task) {
-        viewModelScope.launch {
-            repository.updateTask(task.copy(
-                isDeleted = true
-            ))
-        }
-    }
-
-    fun restoreTask(task: Task) {
-        viewModelScope.launch {
-            repository.updateTask(
-                task.copy(isDeleted = false)
-            )
-        }
-    }
-
-    fun deleteTask(task: Task) {
-        viewModelScope.launch {
-            repository.deleteTask(task)
-        }
-    }
-
 }

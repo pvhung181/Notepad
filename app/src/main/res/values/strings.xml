@@ -41,4 +41,6 @@
     <string name="privacy_policy">Privacy policy</string>
     <string name="share">Share</string>
     <string name="add">Add</string>
+    <string name="undelete_all">Undelete All</string>
+    <string name="empty_trash">Empty trash</string>
 </resources>

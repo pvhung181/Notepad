@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.appcompat.widget.SearchView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.lutech.notepad.R
@@ -29,6 +30,19 @@ class HomeFragment : Fragment() {
         val adapter = TaskAdapter(activity = requireActivity())
         recycler.adapter = adapter
         homeViewModel.tasks.observe(viewLifecycleOwner) { adapter.setData(it) }
+
+        activity?.findViewById<SearchView>(R.id.search_field)?.setOnQueryTextListener(
+            object : SearchView.OnQueryTextListener {
+                override fun onQueryTextSubmit(query: String?): Boolean {
+                   return true
+                }
+
+                override fun onQueryTextChange(newText: String?): Boolean {
+                    TODO("Not yet implemented")
+                }
+
+            }
+        )
 
         return root
     }

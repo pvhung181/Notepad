@@ -22,13 +22,14 @@ class TrashFragment : Fragment(), MenuProvider {
 
     private val binding get() = _binding!!
 
+    private lateinit var trashViewModel: TrashViewModel
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        val trashViewModel =
-            ViewModelProvider(this)[TrashViewModel::class.java]
+        trashViewModel = ViewModelProvider(this)[TrashViewModel::class.java]
 
         _binding = FragmentTrashBinding.inflate(inflater, container, false)
         val root: View = binding.root
@@ -58,9 +59,16 @@ class TrashFragment : Fragment(), MenuProvider {
     }
 
     override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
-        if(menuItem.itemId == R.id.menu_delete_all) {
-            Toast.makeText(requireContext(), "Active", Toast.LENGTH_SHORT).show()
-            return true
+        when(menuItem.itemId) {
+            R.id.menu_undelete_all -> {
+                trashViewModel.restoreAll()
+            }
+            R.id.menu_export -> {
+
+            }
+            R.id.menu_empty_trash -> {
+                trashViewModel.deleteAll()
+            }
         }
         return false
     }

@@ -5,8 +5,11 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.ActionMode
+import android.view.ContextMenu
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
+import android.widget.Toast
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -47,8 +50,21 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(toolbar)
         setDrawerItemClick()
         setupDrawer()
-
+        setSearchToolbarListener()
+        //registerForContextMenu(binding.appBarMain.moreBtn)
         navView.setupWithNavController(navController)
+    }
+
+    private fun setSearchToolbarListener() {
+        binding.appBarMain.backBtn.setOnClickListener {
+            binding.appBarMain.toolbar.visibility = View.VISIBLE
+            binding.appBarMain.searchToolbar.visibility = View.GONE
+        }
+
+//        binding.appBarMain.moreBtn.setOnClickListener {
+//            Toast.makeText(this, "active", Toast.LENGTH_SHORT).show()
+//        }
+
     }
 
     private fun init() {
@@ -114,14 +130,12 @@ class MainActivity : AppCompatActivity() {
 
         navView.menu.findItem(R.id.nav_help).setOnMenuItemClickListener {
             startActivity(Intent(this, HelpActivity::class.java))
-
             drawerLayout.close()
             true
         }
 
         navView.menu.findItem(R.id.nav_privacy_policy).setOnMenuItemClickListener {
             startActivity(Intent(this, PrivacyPolicyActivity::class.java))
-
             drawerLayout.close()
             true
         }
@@ -131,22 +145,16 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.main, menu)
-//        val searchItem: MenuItem? = menu.findItem(R.id.action_search)
-//        val searchManager = getSystemService(Context.SEARCH_SERVICE) as SearchManager
-//        val searchView: SearchView = searchItem?.actionView as SearchView
-//
-//        searchView.setSearchableInfo(searchManager.getSearchableInfo(componentName))
-
         return super.onCreateOptionsMenu(menu)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if (item.itemId == R.id.action_sort) {
             showSortDialog()
-        } else if (item.itemId == R.id.action_more) {
-
         } else if (item.itemId == R.id.action_search) {
-            startActionMode(getActionModeSearchCallback())
+            binding.appBarMain.toolbar.visibility = View.GONE
+            binding.appBarMain.searchToolbar.visibility = View.VISIBLE
+            binding.appBarMain.searchField.requestFocus()
         }
         return super.onOptionsItemSelected(item)
     }
@@ -160,7 +168,6 @@ class MainActivity : AppCompatActivity() {
             "edit date: from oldest",
             "title: A to Z",
             "title: Z to A",
-
             )
 
         val dialog = builder.setSingleChoiceItems(listItems, checkedItem) { dlg, which ->
@@ -171,31 +178,21 @@ class MainActivity : AppCompatActivity() {
         dialog.show()
     }
 
-    private fun getActionModeSearchCallback(): ActionMode.Callback {
-        return object : ActionMode.Callback {
-            override fun onCreateActionMode(mode: ActionMode?, menu: Menu?): Boolean {
-
-                return true
-            }
-
-            override fun onPrepareActionMode(mode: ActionMode?, menu: Menu?): Boolean {
-                TODO("Not yet implemented")
-            }
-
-            override fun onActionItemClicked(mode: ActionMode?, item: MenuItem?): Boolean {
-                TODO("Not yet implemented")
-            }
-
-            override fun onDestroyActionMode(mode: ActionMode?) {
-                TODO("Not yet implemented")
-            }
-
-        }
-    }
-
-
     override fun onSupportNavigateUp(): Boolean {
         val navController = findNavController(R.id.nav_host_fragment_content_main)
         return navController.navigateUp(appBarConfiguration) || super.onSupportNavigateUp()
     }
+
+//    override fun onCreateContextMenu(
+//        menu: ContextMenu?,
+//        v: View?,
+//        menuInfo: ContextMenu.ContextMenuInfo?
+//    ) {
+//       menuInflater.inflate(R.menu.activity_main_search_menu, menu)
+//        super.onCreateContextMenu(menu, v, menuInfo)
+//    }
+//
+//    override fun onContextItemSelected(item: MenuItem): Boolean {
+//        return super.onContextItemSelected(item)
+//    }
 }

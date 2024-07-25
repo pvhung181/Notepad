@@ -11,8 +11,8 @@
         android:id="@+id/view_overlay"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/purple_500"
-        android:alpha="0.3"
+        android:background="@drawable/overlay_round_border_shape"
+        android:alpha="0.2"
         android:visibility="invisible"/>
 
     <TextView

@@ -23,15 +23,15 @@ import com.lutech.notepad.constants.TASK_ID
 import com.lutech.notepad.constants.TASK_LAST_EDIT
 import com.lutech.notepad.constants.TASK_TITLE
 import com.lutech.notepad.model.Task
+import com.lutech.notepad.ui.TaskViewModel
 import com.lutech.notepad.ui.add.AddActivity
-import com.lutech.notepad.ui.home.HomeViewModel
 
 
 class TaskAdapter(
     var tasks: MutableList<Task> = mutableListOf(),
     val activity: Activity
 ) : RecyclerView.Adapter<TaskAdapter.ViewHolder>() {
-    var mainViewModel: HomeViewModel? = null
+    var mainViewModel: TaskViewModel? = null
     var isEnable = false
     var isSelectAll = false
     var selectList = mutableListOf<Task>()
@@ -55,7 +55,7 @@ class TaskAdapter(
             .inflate(layout.task_item, parent, false)
 
         mainViewModel =
-            ViewModelProvider(activity as FragmentActivity)[HomeViewModel::class.java]
+            ViewModelProvider(activity as FragmentActivity)[TaskViewModel::class.java]
 
 
         return ViewHolder(view)
@@ -77,6 +77,9 @@ class TaskAdapter(
                         val inflater = mode?.menuInflater
 
                         inflater?.inflate(R.menu.select_menu, menu)
+                        menu?.findItem(R.id.menu_delete)?.icon?.setTint(activity.getColor(R.color.white))
+                        menu?.findItem(R.id.menu_select_all)?.icon?.setTint(activity.getColor(R.color.white))
+
                         return true
                     }
 
@@ -94,7 +97,6 @@ class TaskAdapter(
                             id.menu_delete -> {
                                 for (s in selectList) {
                                     tasks.remove(s)
-
                                     //update is_deleted = true not delete
                                     mainViewModel?.moveToTrash(s)
                                 }

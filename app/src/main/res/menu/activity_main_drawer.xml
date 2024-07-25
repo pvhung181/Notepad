@@ -11,13 +11,18 @@
             android:icon="@drawable/note_ic"
             android:title="@string/menu_notes" />
         <item
-            android:id="@+id/nav_backup"
-            android:icon="@drawable/backup_ic"
-            android:title="@string/backup" />
-        <item
             android:id="@+id/nav_trash"
             android:icon="@drawable/trash_ic"
             android:title="@string/trash" />
+    </group>
+
+    <group
+        android:id="@+id/backup_section"
+        >
+        <item
+            android:id="@+id/nav_backup"
+            android:icon="@drawable/backup_ic"
+            android:title="@string/backup" />
     </group>
 
     <group

@@ -1,20 +1,27 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    tools:context=".MainActivity">
-    <item
-        android:id="@+id/activity_main_action_search"
-        android:icon="@drawable/search_ic"
-        android:orderInCategory="100"
-        app:showAsAction="ifRoom|collapseActionView"
-        android:title="@string/search"
-        app:actionViewClass="com.google.android.material.search.SearchView" />
-
+    xmlns:tools="http://schemas.android.com/tools">
 
     <item
-        android:id="@+id/action_more"
-        android:orderInCategory="300"
+        android:id="@+id/action_search_sort"
         android:title="@string/sort"
-        android:icon="@drawable/more_vert_ic"
-        app:showAsAction="ifRoom" />
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_search_select_all"
+        android:title="@string/select_all_notes"
+        app:showAsAction="never">
+    </item>
+
+    <item
+        android:id="@+id/action_search_import"
+        android:title="@string/import_text_files"
+        app:showAsAction="never">
+    </item>
+    <item
+        android:id="@+id/action_search_export"
+        android:title="@string/export_notes_to_text_files"
+        app:showAsAction="never">
+    </item>
+
 </menu>

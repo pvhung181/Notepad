@@ -1,9 +1,6 @@
 package com.lutech.notepad.adapter
 
 import android.app.Activity
-import android.content.DialogInterface
-import android.content.Intent
-import android.os.Bundle
 import android.view.ActionMode
 import android.view.LayoutInflater
 import android.view.Menu
@@ -19,20 +16,14 @@ import androidx.recyclerview.widget.RecyclerView
 import com.lutech.notepad.R
 import com.lutech.notepad.R.id
 import com.lutech.notepad.R.layout
-import com.lutech.notepad.constants.TASK
-import com.lutech.notepad.constants.TASK_CONTENT
-import com.lutech.notepad.constants.TASK_ID
-import com.lutech.notepad.constants.TASK_LAST_EDIT
-import com.lutech.notepad.constants.TASK_TITLE
 import com.lutech.notepad.model.Task
-import com.lutech.notepad.ui.add.AddActivity
-import com.lutech.notepad.ui.home.HomeViewModel
+import com.lutech.notepad.ui.TaskViewModel
 
 
 class TaskDeletedAdapter(
     var tasks: MutableList<Task> = mutableListOf(), val activity: Activity
 ) : RecyclerView.Adapter<TaskDeletedAdapter.ViewHolder>() {
-    var mainViewModel: HomeViewModel? = null
+    var mainViewModel: TaskViewModel? = null
     var isEnable = false
     var isSelectAll = false
     var selectList = mutableListOf<Task>()
@@ -54,7 +45,7 @@ class TaskDeletedAdapter(
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(layout.task_item, parent, false)
 
-        mainViewModel = ViewModelProvider(activity as FragmentActivity)[HomeViewModel::class.java]
+        mainViewModel = ViewModelProvider(activity as FragmentActivity)[TaskViewModel::class.java]
 
 
         return ViewHolder(view)
@@ -73,7 +64,9 @@ class TaskDeletedAdapter(
                 val callback: ActionMode.Callback2 = object : ActionMode.Callback2() {
                     override fun onCreateActionMode(mode: ActionMode?, menu: Menu?): Boolean {
                         val inflater = mode?.menuInflater
-                        inflater?.inflate(R.menu.select_menu, menu)
+                        inflater?.inflate(R.menu.trash_multi_select_menu, menu)
+                        menu?.findItem(R.id.trash_restore)?.icon?.setTint(activity.getColor(R.color.white))
+                        menu?.findItem(R.id.trash_select_all)?.icon?.setTint(activity.getColor(R.color.white))
                         return true
                     }
 
@@ -88,18 +81,16 @@ class TaskDeletedAdapter(
 
                     override fun onActionItemClicked(mode: ActionMode?, item: MenuItem?): Boolean {
                         when (item!!.itemId) {
-                            id.menu_delete -> {
+                            id.trash_restore -> {
                                 for (s in selectList) {
                                     tasks.remove(s)
-
-                                    //update is_deleted = true not delete
-                                    mainViewModel?.moveToTrash(s)
+                                    mainViewModel?.restoreTask(s)
                                 }
 
                                 mode?.finish()
                             }
 
-                            id.menu_select_all -> {
+                            id.trash_select_all -> {
                                 if (selectList.size == tasks.size) {
                                     isSelectAll = false
                                     selectList.clear()
