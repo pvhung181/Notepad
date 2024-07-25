@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.SearchView
+import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.lutech.notepad.R
@@ -37,33 +38,41 @@ class HomeFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         activity?.setTitle(R.string.menu_notes)
-//        val searchView = activity?.findViewById<SearchView>(R.id.app_bar_main)
-//        searchView?.setOnQueryTextListener(
-//            object : SearchView.OnQueryTextListener {
-//                override fun onQueryTextSubmit(query: String?): Boolean {
-//
-//                    return true
-//                }
-//
-//                override fun onQueryTextChange(newText: String?): Boolean {
-//                    if(homeViewModel.tasks.value != null) {
-//                        if(newText.isNullOrBlank()) {
-//                            adapter.setData(homeViewModel.tasks.value!!)
-//                        }
-//                        else {
-//                            adapter.setData(
-//                                homeViewModel.tasks.value!!.filter {
-//                                    it.title.contains(newText)
-//                                }.toMutableList()
-//                            )
-//                        }
-//                    }
-//                    return true
-//                }
-//
-//            }
-//        )
+
+
         super.onViewCreated(view, savedInstanceState)
+    }
+
+    override fun onResume() {
+        val appBarLayout: View? = activity?.findViewById(R.id.app_bar_main)
+        val searchView = appBarLayout?.findViewById<SearchView>(R.id.search_field)
+
+        searchView?.setOnQueryTextListener(
+            object : SearchView.OnQueryTextListener {
+                override fun onQueryTextSubmit(query: String?): Boolean {
+
+                    return true
+                }
+
+                override fun onQueryTextChange(newText: String?): Boolean {
+                    if(homeViewModel.tasks.value != null) {
+                        if(newText.isNullOrBlank()) {
+                            adapter.setData(homeViewModel.tasks.value!!)
+                        }
+                        else {
+                            adapter.setData(
+                                homeViewModel.tasks.value!!.filter {
+                                    it.title.contains(newText)
+                                }.toMutableList()
+                            )
+                        }
+                    }
+                    return true
+                }
+
+            }
+        )
+        super.onResume()
     }
 
     override fun onDestroyView() {
