@@ -1,34 +1,21 @@
 package com.lutech.notepad.ui.add
 
-import android.os.Build
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.Toast
-import androidx.activity.viewModels
-import androidx.annotation.RequiresApi
+import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.get
-import com.lutech.notepad.NotepadApplication
 import com.lutech.notepad.R
 import com.lutech.notepad.constants.TASK
 import com.lutech.notepad.constants.TASK_CONTENT
 import com.lutech.notepad.constants.TASK_ID
 import com.lutech.notepad.constants.TASK_LAST_EDIT
 import com.lutech.notepad.constants.TASK_TITLE
-import com.lutech.notepad.database.AppDatabase
-import com.lutech.notepad.database.dao.TaskDao
-import com.lutech.notepad.database.repository.TaskRepository
-import com.lutech.notepad.database.repository.TaskRepositoryImpl
 import com.lutech.notepad.databinding.ActivityAddBinding
 import com.lutech.notepad.model.Task
-import com.lutech.notepad.ui.backup.BackupViewModel
 import com.lutech.notepad.utils.formatDate
-import java.text.SimpleDateFormat
-import java.time.LocalDateTime
 import java.util.Date
 
 class AddActivity : AppCompatActivity() {
