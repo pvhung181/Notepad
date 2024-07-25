@@ -15,41 +15,54 @@ class HomeFragment : Fragment() {
 
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
-
+    private lateinit var homeViewModel: HomeViewModel
+    private lateinit var adapter: TaskAdapter
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        val homeViewModel =
+        homeViewModel =
             ViewModelProvider(this).get(HomeViewModel::class.java)
 
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
         val root: View = binding.root
         val recycler = binding.recycler
-        val adapter = TaskAdapter(activity = requireActivity())
+        adapter = TaskAdapter(activity = requireActivity())
         recycler.adapter = adapter
         homeViewModel.tasks.observe(viewLifecycleOwner) { adapter.setData(it) }
-
-        activity?.findViewById<SearchView>(R.id.search_field)?.setOnQueryTextListener(
-            object : SearchView.OnQueryTextListener {
-                override fun onQueryTextSubmit(query: String?): Boolean {
-                   return true
-                }
-
-                override fun onQueryTextChange(newText: String?): Boolean {
-                    TODO("Not yet implemented")
-                }
-
-            }
-        )
 
         return root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         activity?.setTitle(R.string.menu_notes)
-
+//        val searchView = activity?.findViewById<SearchView>(R.id.app_bar_main)
+//        searchView?.setOnQueryTextListener(
+//            object : SearchView.OnQueryTextListener {
+//                override fun onQueryTextSubmit(query: String?): Boolean {
+//
+//                    return true
+//                }
+//
+//                override fun onQueryTextChange(newText: String?): Boolean {
+//                    if(homeViewModel.tasks.value != null) {
+//                        if(newText.isNullOrBlank()) {
+//                            adapter.setData(homeViewModel.tasks.value!!)
+//                        }
+//                        else {
+//                            adapter.setData(
+//                                homeViewModel.tasks.value!!.filter {
+//                                    it.title.contains(newText)
+//                                }.toMutableList()
+//                            )
+//                        }
+//                    }
+//                    return true
+//                }
+//
+//            }
+//        )
         super.onViewCreated(view, savedInstanceState)
     }
 
