@@ -31,4 +31,14 @@
     <string name="select_all">Select all</string>
     <string name="delete_all">Delete All</string>
     <string name="last_edit">last edit :</string>
+    <string name="select_all_notes">Select all notes</string>
+    <string name="import_text_files">Import text files</string>
+    <string name="export_notes_to_text_files">Export notes to text files</string>
+    <string name="categories">Categories</string>
+    <string name="turn_off_ads">Turn off ads</string>
+    <string name="rate_the_app">Rate the app</string>
+    <string name="help">Help</string>
+    <string name="privacy_policy">Privacy policy</string>
+    <string name="share">Share</string>
+    <string name="add">Add</string>
 </resources>

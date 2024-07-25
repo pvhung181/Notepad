@@ -16,9 +16,19 @@
         app:showAsAction="ifRoom" />
 
     <item
-        android:id="@+id/action_more"
-        android:orderInCategory="300"
-        android:title="@string/sort"
-        android:icon="@drawable/more_vert_ic"
-        app:showAsAction="ifRoom" />
+        android:id="@+id/activity_main_action_select_all"
+        android:title="@string/select_all_notes"
+        app:showAsAction="never">
+    </item>
+
+    <item
+        android:id="@+id/activity_main_action_import"
+        android:title="@string/import_text_files"
+        app:showAsAction="never">
+    </item>
+    <item
+        android:id="@+id/activity_main_action_export"
+        android:title="@string/export_notes_to_text_files"
+        app:showAsAction="never">
+    </item>
 </menu>

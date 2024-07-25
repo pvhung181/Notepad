@@ -20,10 +20,44 @@
             android:title="@string/trash" />
     </group>
 
-    <group >
+    <group
+        android:id="@+id/categories_section"
+        android:checkableBehavior="single">
+        <item android:title="@string/categories">
+            <menu>
+                <item
+                    android:id="@+id/nav_categories"
+                    android:icon="@drawable/add_note_ic"
+                    android:title="@string/edit_categories" />
+            </menu>
+        </item>
+    </group>
+
+
+    <group>
         <item
             android:id="@+id/nav_setting"
             android:icon="@drawable/setting_ic"
             android:title="@string/settings" />
+
+        <item
+            android:id="@+id/nav_turn_off_ads"
+            android:icon="@drawable/ban_ic"
+            android:title="@string/turn_off_ads" />
+
+        <item
+            android:id="@+id/nav_rate_the_app"
+            android:icon="@drawable/rate_ic"
+            android:title="@string/rate_the_app" />
+
+        <item
+            android:id="@+id/nav_help"
+            android:icon="@drawable/help_ic"
+            android:title="@string/help" />
+
+        <item
+            android:id="@+id/nav_privacy_policy"
+            android:icon="@drawable/privacy_ic"
+            android:title="@string/privacy_policy" />
     </group>
 </menu>

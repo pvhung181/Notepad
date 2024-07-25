@@ -92,9 +92,7 @@ class AddActivity : AppCompatActivity() {
                 clearInput()
             }
         }
-        else if(item.itemId == R.id.activity_add_action_more) {
 
-        }
         else if(item.itemId == android.R.id.home) {
             onBackPressedDispatcher.onBackPressed()
         }

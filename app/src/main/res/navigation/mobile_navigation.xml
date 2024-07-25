@@ -12,10 +12,10 @@
         tools:layout="@layout/fragment_home" />
 
     <fragment
-        android:id="@+id/nav_backup"
-        android:name="com.lutech.notepad.ui.backup.BackupFragment"
-        android:label="@string/backup"
-        tools:layout="@layout/fragment_backup" />
+        android:id="@+id/nav_categories"
+        android:name="com.lutech.notepad.ui.category.CategoryFragment"
+        android:label="@string/categories"
+        tools:layout="@layout/fragment_category"/>
 
     <fragment
         android:id="@+id/nav_trash"

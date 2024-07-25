@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import com.lutech.notepad.R
 import com.lutech.notepad.adapter.TaskAdapter
 import com.lutech.notepad.databinding.FragmentHomeBinding
 
@@ -30,6 +31,12 @@ class HomeFragment : Fragment() {
         homeViewModel.tasks.observe(viewLifecycleOwner) { adapter.setData(it) }
 
         return root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        activity?.setTitle(R.string.menu_notes)
+
+        super.onViewCreated(view, savedInstanceState)
     }
 
     override fun onDestroyView() {

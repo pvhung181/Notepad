@@ -23,6 +23,9 @@ import androidx.navigation.ui.setupWithNavController
 import com.google.android.material.navigation.NavigationView
 import com.lutech.notepad.databinding.ActivityMainBinding
 import com.lutech.notepad.ui.add.AddActivity
+import com.lutech.notepad.ui.backup.BackupActivity
+import com.lutech.notepad.ui.help.HelpActivity
+import com.lutech.notepad.ui.privacy_policy.PrivacyPolicyActivity
 import com.lutech.notepad.ui.setting.SettingActivity
 
 class MainActivity : AppCompatActivity() {
@@ -57,8 +60,11 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupDrawer() {
         val toggle = ActionBarDrawerToggle(
-            this, drawerLayout, toolbar,
-            R.string.navigation_drawer_open, R.string.navigation_drawer_close
+            this,
+            drawerLayout,
+            toolbar,
+            R.string.navigation_drawer_open,
+            R.string.navigation_drawer_close
         )
         val newDrawerArrowDrawable = DrawerArrowDrawable(this)
         newDrawerArrowDrawable.color = ContextCompat.getColor(this, R.color.white)
@@ -89,15 +95,38 @@ class MainActivity : AppCompatActivity() {
         }
 
         navView.menu.findItem(R.id.nav_backup).setOnMenuItemClickListener {
-            navController.navigate(R.id.nav_backup)
+            startActivity(Intent(this, BackupActivity::class.java))
             drawerLayout.close()
             true
         }
+
         navView.menu.findItem(R.id.nav_trash).setOnMenuItemClickListener {
             navController.navigate(R.id.nav_trash)
             drawerLayout.close()
             true
         }
+
+        navView.menu.findItem(R.id.nav_categories).setOnMenuItemClickListener {
+            navController.navigate(R.id.nav_categories)
+            drawerLayout.close()
+            true
+        }
+
+        navView.menu.findItem(R.id.nav_help).setOnMenuItemClickListener {
+            startActivity(Intent(this, HelpActivity::class.java))
+
+            drawerLayout.close()
+            true
+        }
+
+        navView.menu.findItem(R.id.nav_privacy_policy).setOnMenuItemClickListener {
+            startActivity(Intent(this, PrivacyPolicyActivity::class.java))
+
+            drawerLayout.close()
+            true
+        }
+
+
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -112,13 +141,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        if(item.itemId == R.id.action_sort) {
+        if (item.itemId == R.id.action_sort) {
             showSortDialog()
-        }
-        else if(item.itemId == R.id.action_more) {
+        } else if (item.itemId == R.id.action_more) {
 
-        }
-        else if(item.itemId == R.id.action_search) {
+        } else if (item.itemId == R.id.action_search) {
             startActionMode(getActionModeSearchCallback())
         }
         return super.onOptionsItemSelected(item)
@@ -134,16 +161,11 @@ class MainActivity : AppCompatActivity() {
             "title: A to Z",
             "title: Z to A",
 
-        )
+            )
 
-        val dialog = builder.setSingleChoiceItems(listItems, checkedItem) {
-                dlg, which -> {
-                    checkedItem = which
-
-
-                }
-        }
-            .setNegativeButton("Cancel") { dlg, _ -> dlg.dismiss()}
+        val dialog = builder.setSingleChoiceItems(listItems, checkedItem) { dlg, which ->
+            checkedItem = which
+        }.setNegativeButton("Cancel") { dlg, _ -> dlg.dismiss() }
             .setPositiveButton("Sort") { dlg, _ -> dlg.dismiss() } //Todo
             .create()
         dialog.show()

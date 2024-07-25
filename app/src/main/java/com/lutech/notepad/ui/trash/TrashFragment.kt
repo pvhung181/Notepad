@@ -44,6 +44,7 @@ class TrashFragment : Fragment(), MenuProvider {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         activity?.addMenuProvider(this, viewLifecycleOwner)
+        activity?.setTitle(R.string.trash)
     }
 
     override fun onDestroyView() {

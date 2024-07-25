@@ -10,9 +10,7 @@
         app:showAsAction="ifRoom" />
 
     <item
-        android:id="@+id/activity_add_action_more"
-        android:orderInCategory="200"
-        android:title="@string/sort"
-        android:icon="@drawable/more_vert_ic"
-        app:showAsAction="ifRoom" />
+        android:id="@+id/activity_add_action_share"
+        android:title="@string/share"
+        app:showAsAction="never" />
 </menu>
