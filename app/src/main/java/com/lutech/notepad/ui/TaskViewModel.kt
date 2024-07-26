@@ -15,7 +15,8 @@ class TaskViewModel(
 ) : AndroidViewModel(application) {
     private var mutableLiveData = MutableLiveData<String>()
 
-    private val repository: TaskRepositoryImpl = TaskRepositoryImpl(AppDatabase.getDatabase(application).taskDao())
+    private val repository: TaskRepositoryImpl =
+        TaskRepositoryImpl(AppDatabase.getDatabase(application).taskDao())
 
     private val _tasks = repository.getAllTask()
 
@@ -32,9 +33,11 @@ class TaskViewModel(
 
     fun moveToTrash(task: Task) {
         viewModelScope.launch {
-            repository.updateTask(task.copy(
-                isDeleted = true
-            ))
+            repository.updateTask(
+                task.copy(
+                    isDeleted = true
+                )
+            )
         }
     }
 
@@ -44,6 +47,19 @@ class TaskViewModel(
                 task.copy(isDeleted = false)
             )
         }
+    }
+
+    fun insertTask(task: Task): Long {
+        var insertedId = 0L
+        viewModelScope.launch {
+            insertedId = repository.saveTask(task)
+        }
+        return insertedId
+    }
+
+    fun getLastTask(): Task {
+
+        return repository.getLastTask()
     }
 
     fun deleteTask(task: Task) {

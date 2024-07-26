@@ -18,11 +18,14 @@ interface TaskDao {
     @Query("SELECT * FROM task where is_deleted = 1")
     fun getAllDeletedNotes(): LiveData<MutableList<Task>>
 
+    @Query("select * from task order by task_id desc  limit 1")
+    fun getLastTask(): Task
+
     @Insert
     fun insertAll(vararg tasks: Task)
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insert(task: Task)
+    suspend fun insert(task: Task): Long
 
     @Update
     suspend fun update(task: Task)

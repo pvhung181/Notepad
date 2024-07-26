@@ -53,7 +53,6 @@ class HomeFragment : Fragment() {
 
                     return true
                 }
-
                 override fun onQueryTextChange(newText: String?): Boolean {
                     if(homeViewModel.tasks.value != null) {
                         if(newText.isNullOrBlank()) {

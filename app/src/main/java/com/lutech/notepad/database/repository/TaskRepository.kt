@@ -13,7 +13,10 @@ interface TaskRepository {
 
     //fun getAllTasksNotTracking(): List<Task>
 
-    suspend fun saveTask(task: Task)
+    fun getLastTask(): Task
+
+
+    suspend fun saveTask(task: Task): Long
 
     suspend fun deleteTask  (task: Task)
 
@@ -25,6 +28,7 @@ interface TaskRepository {
 class TaskRepositoryImpl(
     val taskDao: TaskDao
 ) : TaskRepository {
+
     override fun getAllTask(): LiveData<MutableList<Task>> {
         return taskDao.getAll()
     }
@@ -33,12 +37,16 @@ class TaskRepositoryImpl(
         return taskDao.getAllDeletedNotes()
     }
 
+    override fun getLastTask(): Task {
+        return taskDao.getLastTask()
+    }
+
 //    override fun getAllTasksNotTracking(): List<Task> {
 //        return taskDao.getAllTasksNotTracking()
 //    }
 
-    override suspend fun saveTask(task: Task) {
-        taskDao.insert(task)
+    override suspend fun saveTask(task: Task): Long {
+        return taskDao.insert(task)
     }
 
     override suspend fun deleteTask(task: Task) {

@@ -18,13 +18,21 @@ import androidx.appcompat.widget.SearchView
 import androidx.appcompat.widget.Toolbar
 import androidx.core.content.ContextCompat
 import androidx.drawerlayout.widget.DrawerLayout
+import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.NavController
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupWithNavController
 import com.google.android.material.navigation.NavigationView
+import com.lutech.notepad.constants.TASK
+import com.lutech.notepad.constants.TASK_CONTENT
+import com.lutech.notepad.constants.TASK_ID
+import com.lutech.notepad.constants.TASK_LAST_EDIT
+import com.lutech.notepad.constants.TASK_TITLE
 import com.lutech.notepad.databinding.ActivityMainBinding
+import com.lutech.notepad.model.Task
+import com.lutech.notepad.ui.TaskViewModel
 import com.lutech.notepad.ui.add.AddActivity
 import com.lutech.notepad.ui.backup.BackupActivity
 import com.lutech.notepad.ui.help.HelpActivity
@@ -39,6 +47,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var navView: NavigationView
     private lateinit var navController: NavController
     private lateinit var toolbar: Toolbar
+    private lateinit var taskViewModel: TaskViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -72,6 +81,7 @@ class MainActivity : AppCompatActivity() {
         navView = binding.navView
         navController = findNavController(R.id.nav_host_fragment_content_main)
         toolbar = binding.appBarMain.toolbar
+        taskViewModel = ViewModelProvider(this)[TaskViewModel::class.java]
     }
 
     private fun setupDrawer() {

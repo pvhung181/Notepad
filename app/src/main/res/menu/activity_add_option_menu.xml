@@ -8,9 +8,71 @@
         android:orderInCategory="100"
         android:title="@string/save"
         app:showAsAction="ifRoom" />
+    <item android:id="@+id/action_undo"
+        android:orderInCategory="200"
+        android:title="@string/undo"
+        app:showAsAction="always"/>
+
+    <item
+        android:id="@+id/activity_add_action_redo"
+        android:title="@string/redo"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/activity_add_action_undo_all"
+        android:title="@string/undo_all"
+        app:showAsAction="never" />
+
 
     <item
         android:id="@+id/activity_add_action_share"
         android:title="@string/share"
         app:showAsAction="never" />
+
+    <item
+        android:id="@+id/activity_add_action_delete"
+        android:title="@string/delete"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/activity_add_action_search"
+        android:title="@string/search"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/activity_add_action_export"
+        android:title="@string/export_notes_to_text_files"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/activity_add_action_categorize"
+        android:title="@string/categorize"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/activity_add_action_colorize"
+        android:title="@string/colorize"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/activity_add_action_read_mode"
+        android:title="@string/switch_to_read_mode"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/activity_add_action_print"
+        android:title="@string/print"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/activity_add_action_format_bar"
+        android:title="@string/show_formatting_bar"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/activity_add_action_show_info"
+        android:title="@string/show_information"
+        app:showAsAction="never" />
+
+
 </menu>
