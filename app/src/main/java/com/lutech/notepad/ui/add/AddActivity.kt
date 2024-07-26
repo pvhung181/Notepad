@@ -2,14 +2,10 @@ package com.lutech.notepad.ui.add
 
 import android.content.Intent
 import android.graphics.Color
-import android.graphics.drawable.ColorDrawable
-import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
-import android.os.Build
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
-import android.util.Log
 import android.view.Gravity
 import android.view.Menu
 import android.view.MenuItem
@@ -20,15 +16,14 @@ import android.widget.FrameLayout
 import android.widget.GridLayout
 import android.widget.TextView
 import android.widget.Toast
-import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
-import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.ViewModelProvider
 import com.lutech.notepad.R
 import com.lutech.notepad.constants.TASK
 import com.lutech.notepad.constants.TASK_CONTENT
+import com.lutech.notepad.constants.TASK_CREATION_DATE
 import com.lutech.notepad.constants.TASK_DEFAULT_COLOR
 import com.lutech.notepad.constants.TASK_DEFAULT_DARK_COLOR
 import com.lutech.notepad.constants.TASK_ID
@@ -38,6 +33,7 @@ import com.lutech.notepad.data.getColors
 import com.lutech.notepad.databinding.ActivityAddBinding
 import com.lutech.notepad.model.Task
 import com.lutech.notepad.ui.TaskViewModel
+import com.lutech.notepad.utils.countWord
 import com.lutech.notepad.utils.darkenColor
 import com.lutech.notepad.utils.formatDate
 import java.util.Date
@@ -70,23 +66,19 @@ class AddActivity : AppCompatActivity() {
         taskViewModel = ViewModelProvider(this)[TaskViewModel::class.java]
 
 
-
-
-        if (isUpdate) {
-            val bundle = intent.getBundleExtra(TASK)
-            if (bundle != null) {
-                task.id = bundle.getInt(TASK_ID)
-                task.title = bundle.getString(TASK_TITLE)!!
-                task.content = bundle.getString(TASK_CONTENT)!!
-                task.lastEdit = bundle.getString(TASK_LAST_EDIT)!!
-                task.color = bundle.getString(TASK_DEFAULT_COLOR)!!
-                task.darkColor = bundle.getString(TASK_DEFAULT_DARK_COLOR)!!
-                selectedColor = task.color
-                darkSelectedColor = task.darkColor
-                setCColor()
-                applyColor()
-
-            }
+        val bundle = intent.getBundleExtra(TASK)
+        if (bundle != null) {
+            task.id = bundle.getInt(TASK_ID)
+            task.title = bundle.getString(TASK_TITLE)!!
+            task.content = bundle.getString(TASK_CONTENT)!!
+            task.lastEdit = bundle.getString(TASK_LAST_EDIT)!!
+            task.createDate = bundle.getString(TASK_CREATION_DATE)!!
+            task.color = bundle.getString(TASK_DEFAULT_COLOR)!!
+            task.darkColor = bundle.getString(TASK_DEFAULT_DARK_COLOR)!!
+            selectedColor = task.color
+            darkSelectedColor = task.darkColor
+            setCColor()
+            applyColor()
 
         }
 
@@ -146,18 +138,16 @@ class AddActivity : AppCompatActivity() {
                     )
                 )
 
-                if (isUpdate) {
-                    addViewModel.update(task)
-                    Toast.makeText(this, "update successfully", Toast.LENGTH_SHORT).show()
-                } else {
-                    addViewModel.insert(task)
-                    Toast.makeText(this, "Add successfully", Toast.LENGTH_SHORT).show()
-                    clearInput()
-                    onBackPressedDispatcher.onBackPressed()
-                }
+                addViewModel.update(task)
+                Toast.makeText(this, "update successfully", Toast.LENGTH_SHORT).show()
             }
 
-            android.R.id.home -> onBackPressedDispatcher.onBackPressed()
+            android.R.id.home -> {
+                onBackPressedDispatcher.onBackPressed()
+
+
+            }
+
             R.id.activity_add_action_share -> {
                 if (!binding.contentEditText.text.isNullOrBlank()) {
                     val sendIntent: Intent = Intent().apply {
@@ -182,9 +172,14 @@ class AddActivity : AppCompatActivity() {
             }
 
             R.id.activity_add_action_read_mode -> {
+                //todo
                 binding.titleEditText.isFocusable = false
                 binding.titleEditText.isFocusableInTouchMode = false
                 binding.contentEditText.isEnabled = false
+            }
+
+            R.id.activity_add_action_show_info -> {
+                showInformationDialog()
             }
         }
         return super.onOptionsItemSelected(item)
@@ -258,7 +253,6 @@ class AddActivity : AppCompatActivity() {
                     setBackgroundColor(Color.parseColor(element))
                 }
                 updateSelection()
-                //Toast.makeText(this, "Active", Toast.LENGTH_SHORT).show()
             }
 
             view.findViewById<Button>(R.id.remove_color_button).setOnClickListener {
@@ -295,7 +289,6 @@ class AddActivity : AppCompatActivity() {
                     task.copy(
                         title = binding.titleEditText.text.toString(),
                         content = binding.contentEditText.text.toString(),
-                        lastEdit = formatDate(Date()),
                         color = selectedColor,
                         darkColor = darkSelectedColor
                     )
@@ -340,22 +333,35 @@ class AddActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         setTextLayoutBackground(TASK_DEFAULT_COLOR)
-
         super.onDestroy()
+    }
+
+    override fun onStop() {
+        updateTask(task.copy(lastEdit = formatDate(Date())))
+        taskViewModel.updateTask(task)
+        Toast.makeText(this, "Saved", Toast.LENGTH_LONG).show()
+        super.onStop()
     }
 
     fun showInformationDialog() {
 
         val string = binding.contentEditText.text.toString()
 
+        var message: String = "Words : ${string.countWord()}\n" +
+                "Wrapped lines : ${string.split("\n").size}\n" +
+                "Characters : ${string.length}\n" +
+                "Characters without whitespaces : ${string.length - string.count { it.isWhitespace() }}\n" +
+                "Created at : ${task.createDate}\n" +
+                "Last saved at : ${task.lastEdit}"
+
+
         val builder = AlertDialog.Builder(this)
 
-
-        val dialog = builder
+        builder
+            .setPositiveButton("Ok") { dlg, _ -> dlg.dismiss() }
             .setTitle("Information")
-
-            .create()
-        dialog.show()
+            .setMessage(message)
+            .create().show()
     }
 
     fun updateTask(t: Task) {

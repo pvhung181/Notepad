@@ -19,7 +19,7 @@ interface TaskDao {
     fun getAllDeletedNotes(): LiveData<MutableList<Task>>
 
     @Query("select * from task order by task_id desc  limit 1")
-    fun getLastTask(): Task
+    suspend fun getLastTask(): Task
 
     @Insert
     fun insertAll(vararg tasks: Task)

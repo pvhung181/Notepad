@@ -27,6 +27,9 @@ import androidx.navigation.ui.setupWithNavController
 import com.google.android.material.navigation.NavigationView
 import com.lutech.notepad.constants.TASK
 import com.lutech.notepad.constants.TASK_CONTENT
+import com.lutech.notepad.constants.TASK_CREATION_DATE
+import com.lutech.notepad.constants.TASK_DEFAULT_COLOR
+import com.lutech.notepad.constants.TASK_DEFAULT_DARK_COLOR
 import com.lutech.notepad.constants.TASK_ID
 import com.lutech.notepad.constants.TASK_LAST_EDIT
 import com.lutech.notepad.constants.TASK_TITLE
@@ -103,7 +106,27 @@ class MainActivity : AppCompatActivity() {
 
     private fun setListeners() {
         binding.appBarMain.fab.setOnClickListener {
-            startActivity(Intent(this, AddActivity::class.java))
+            taskViewModel.insertTask(Task()).invokeOnCompletion {
+                taskViewModel.getLastTask().invokeOnCompletion {
+
+                    val task = taskViewModel.lastTask
+                    
+                    val bundle = Bundle()
+                    bundle.putInt(TASK_ID, task.id);
+                    bundle.putString(TASK_TITLE, task.title)
+                    bundle.putString(TASK_CONTENT, task.content)
+                    bundle.putString(TASK_LAST_EDIT, task.lastEdit)
+                    bundle.putString(TASK_CREATION_DATE, task.createDate)
+                    bundle.putString(TASK_DEFAULT_COLOR, task.color)
+                    bundle.putString(TASK_DEFAULT_DARK_COLOR, task.darkColor)
+
+
+
+                    val it = Intent(this, AddActivity::class.java)
+                    it.putExtra(TASK, bundle)
+                    startActivity(it)
+                }
+            }
         }
     }
 

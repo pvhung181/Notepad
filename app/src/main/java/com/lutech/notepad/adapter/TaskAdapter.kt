@@ -21,6 +21,7 @@ import com.lutech.notepad.R.id
 import com.lutech.notepad.R.layout
 import com.lutech.notepad.constants.TASK
 import com.lutech.notepad.constants.TASK_CONTENT
+import com.lutech.notepad.constants.TASK_CREATION_DATE
 import com.lutech.notepad.constants.TASK_DEFAULT_COLOR
 import com.lutech.notepad.constants.TASK_DEFAULT_DARK_COLOR
 import com.lutech.notepad.constants.TASK_ID
@@ -158,6 +159,7 @@ class TaskAdapter(
                 bundle.putString(TASK_TITLE, tasks[position].title)
                 bundle.putString(TASK_CONTENT, tasks[position].content)
                 bundle.putString(TASK_LAST_EDIT, tasks[position].lastEdit)
+                bundle.putString(TASK_CREATION_DATE, tasks[position].createDate)
                 bundle.putString(TASK_DEFAULT_COLOR, tasks[position].color)
                 bundle.putString(TASK_DEFAULT_DARK_COLOR, tasks[position].darkColor)
 

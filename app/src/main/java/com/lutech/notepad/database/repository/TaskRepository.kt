@@ -14,7 +14,7 @@ interface TaskRepository {
 
     //fun getAllTasksNotTracking(): List<Task>
 
-    fun getLastTask(): Task
+    suspend fun getLastTask(): Task
 
 
     suspend fun saveTask(task: Task): Long
@@ -38,7 +38,7 @@ class TaskRepositoryImpl(
         return taskDao.getAllDeletedNotes()
     }
 
-    override fun getLastTask(): Task {
+    override suspend fun getLastTask(): Task {
         return taskDao.getLastTask()
     }
 

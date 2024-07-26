@@ -8,6 +8,8 @@ import androidx.lifecycle.viewModelScope
 import com.lutech.notepad.database.AppDatabase
 import com.lutech.notepad.database.repository.TaskRepositoryImpl
 import com.lutech.notepad.model.Task
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 class TaskViewModel(
@@ -22,7 +24,7 @@ class TaskViewModel(
 
     val tasks: LiveData<MutableList<Task>> = _tasks
 
-
+    lateinit var lastTask: Task
 
     fun setText(s: String) {
         mutableLiveData.value = s
@@ -56,17 +58,16 @@ class TaskViewModel(
         }
     }
 
-    fun insertTask(task: Task): Long {
-        var insertedId = 0L
-        viewModelScope.launch {
-            insertedId = repository.saveTask(task)
+    fun insertTask(task: Task): Job {
+       return viewModelScope.launch {
+             repository.saveTask(task)
         }
-        return insertedId
     }
 
-    fun getLastTask(): Task {
-
-        return tasks.value!![tasks.value!!.size - 1]
+    fun getLastTask(): Job {
+        return viewModelScope.launch {
+           lastTask = repository.getLastTask()
+        }
     }
 
     fun deleteTask(task: Task) {
