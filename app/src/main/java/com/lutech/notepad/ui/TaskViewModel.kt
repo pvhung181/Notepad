@@ -23,6 +23,7 @@ class TaskViewModel(
     val tasks: LiveData<MutableList<Task>> = _tasks
 
 
+
     fun setText(s: String) {
         mutableLiveData.value = s
     }
@@ -49,6 +50,12 @@ class TaskViewModel(
         }
     }
 
+    fun updateTask(task: Task) {
+        viewModelScope.launch {
+            repository.updateTask(task)
+        }
+    }
+
     fun insertTask(task: Task): Long {
         var insertedId = 0L
         viewModelScope.launch {
@@ -59,7 +66,7 @@ class TaskViewModel(
 
     fun getLastTask(): Task {
 
-        return repository.getLastTask()
+        return tasks.value!![tasks.value!!.size - 1]
     }
 
     fun deleteTask(task: Task) {

@@ -5,7 +5,10 @@ import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
+import android.os.Build
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.util.Log
 import android.view.Gravity
 import android.view.Menu
@@ -17,9 +20,11 @@ import android.widget.FrameLayout
 import android.widget.GridLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
+import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.ViewModelProvider
 import com.lutech.notepad.R
 import com.lutech.notepad.constants.TASK
@@ -32,6 +37,7 @@ import com.lutech.notepad.constants.TASK_TITLE
 import com.lutech.notepad.data.getColors
 import com.lutech.notepad.databinding.ActivityAddBinding
 import com.lutech.notepad.model.Task
+import com.lutech.notepad.ui.TaskViewModel
 import com.lutech.notepad.utils.darkenColor
 import com.lutech.notepad.utils.formatDate
 import java.util.Date
@@ -49,6 +55,7 @@ class AddActivity : AppCompatActivity() {
     var cSelectedColor: String = TASK_DEFAULT_COLOR
     var cDarkSelectedColor: String = TASK_DEFAULT_DARK_COLOR
 
+    lateinit var taskViewModel: TaskViewModel
 
     var task: Task = Task()
 
@@ -60,6 +67,7 @@ class AddActivity : AppCompatActivity() {
         setContentView(binding.root)
         isUpdate = intent.getBundleExtra(TASK) != null
         toolbar = binding.toolbar
+        taskViewModel = ViewModelProvider(this)[TaskViewModel::class.java]
 
 
 
@@ -85,6 +93,34 @@ class AddActivity : AppCompatActivity() {
         binding.titleEditText.setText(task.title)
         binding.contentEditText.setText(task.content)
 
+        binding.titleEditText.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
+
+            }
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                updateTask(task.copy(title = s.toString()))
+            }
+
+            override fun afterTextChanged(s: Editable?) {
+
+            }
+        })
+
+        binding.contentEditText.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
+
+            }
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                updateTask(task.copy(content = s.toString()))
+            }
+
+            override fun afterTextChanged(s: Editable?) {
+
+            }
+        })
+
         binding.titleEditText.requestFocus()
 
         setSupportActionBar(toolbar)
@@ -96,14 +132,19 @@ class AddActivity : AppCompatActivity() {
         return super.onCreateOptionsMenu(menu)
     }
 
+
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.action_save -> {
-                task.title = binding.titleEditText.text.toString()
-                task.content = binding.contentEditText.text.toString()
-                task.lastEdit = formatDate(Date())
-                task.color = selectedColor
-                task.darkColor = darkSelectedColor
+                updateTask(
+                    task.copy(
+                        title = binding.titleEditText.text.toString(),
+                        content = binding.contentEditText.text.toString(),
+                        lastEdit = formatDate(Date()),
+                        color = selectedColor,
+                        darkColor = darkSelectedColor
+                    )
+                )
 
                 if (isUpdate) {
                     addViewModel.update(task)
@@ -135,8 +176,15 @@ class AddActivity : AppCompatActivity() {
                     startActivity(shareIntent)
                 }
             }
+
             R.id.activity_add_action_colorize -> {
                 showColorPickerDialog()
+            }
+
+            R.id.activity_add_action_read_mode -> {
+                binding.titleEditText.isFocusable = false
+                binding.titleEditText.isFocusableInTouchMode = false
+                binding.contentEditText.isEnabled = false
             }
         }
         return super.onOptionsItemSelected(item)
@@ -168,7 +216,10 @@ class AddActivity : AppCompatActivity() {
 
             val b = Button(this).apply {
                 setBackgroundColor(Color.parseColor(element))
-                layoutParams = FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+                layoutParams = FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+                )
             }
 
             val plusText = TextView(this).apply {
@@ -178,7 +229,10 @@ class AddActivity : AppCompatActivity() {
                 gravity = Gravity.CENTER
                 elevation = 10f
                 visibility = View.INVISIBLE
-                layoutParams = FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+                layoutParams = FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+                )
             }
 
             frame.addView(b)
@@ -191,11 +245,10 @@ class AddActivity : AppCompatActivity() {
                     val frame = colorGrid.getChildAt(i) as FrameLayout
                     val plusText = frame.getChildAt(1) as TextView
 
-                        if (getColors()[i] == selectedColor) {
-                            plusText.visibility = View.VISIBLE
-                            darkSelectedColor = darkenColor(selectedColor)
-                        }
-                        else plusText.visibility = View.INVISIBLE
+                    if (getColors()[i] == selectedColor) {
+                        plusText.visibility = View.VISIBLE
+                        darkSelectedColor = darkenColor(selectedColor)
+                    } else plusText.visibility = View.INVISIBLE
                 }
             }
 
@@ -212,12 +265,13 @@ class AddActivity : AppCompatActivity() {
                 selectedColor = TASK_DEFAULT_COLOR
                 darkSelectedColor = TASK_DEFAULT_DARK_COLOR
 
-                view.findViewById<TextView>(R.id.select_color_title).setBackgroundColor(getColor(R.color.transparent))
+                view.findViewById<TextView>(R.id.select_color_title)
+                    .setBackgroundColor(getColor(R.color.transparent))
 
                 for (i in 0 until colorGrid.childCount) {
                     val frame = colorGrid.getChildAt(i) as FrameLayout
                     val plusText = frame.getChildAt(1) as TextView
-                     plusText.visibility = View.INVISIBLE
+                    plusText.visibility = View.INVISIBLE
                 }
             }
 
@@ -231,17 +285,23 @@ class AddActivity : AppCompatActivity() {
         val dialog = builder
             .setNegativeButton("Cancel") { dlg, _ ->
                 resetCurrentColor()
-                //todo
-//                selectedColor = TASK_DEFAULT_COLOR
-//                darkSelectedColor = TASK_DEFAULT_DARK_COLOR
-                dlg.dismiss() }
+                dlg.dismiss()
+            }
             .setPositiveButton("OK") { dlg, _ ->
                 applyColor()
                 setCColor()
-                task.color = selectedColor
-                task.color = darkSelectedColor
+                //Todo
+                updateTask(
+                    task.copy(
+                        title = binding.titleEditText.text.toString(),
+                        content = binding.contentEditText.text.toString(),
+                        lastEdit = formatDate(Date()),
+                        color = selectedColor,
+                        darkColor = darkSelectedColor
+                    )
+                )
                 dlg.dismiss()
-            } //Todo
+            }
             .setView(view)
             .create()
         dialog.show()
@@ -276,6 +336,36 @@ class AddActivity : AppCompatActivity() {
     private fun setCColor() {
         cSelectedColor = selectedColor
         cDarkSelectedColor = darkSelectedColor
+    }
+
+    override fun onDestroy() {
+        setTextLayoutBackground(TASK_DEFAULT_COLOR)
+
+        super.onDestroy()
+    }
+
+    fun showInformationDialog() {
+
+        val string = binding.contentEditText.text.toString()
+
+        val builder = AlertDialog.Builder(this)
+
+
+        val dialog = builder
+            .setTitle("Information")
+
+            .create()
+        dialog.show()
+    }
+
+    fun updateTask(t: Task) {
+//        task.title = binding.titleEditText.text.toString()
+//        task.content = binding.contentEditText.text.toString()
+//        task.lastEdit = formatDate(Date())
+//        task.color = selectedColor
+//        task.darkColor = darkSelectedColor
+
+        task = t
     }
 
 }

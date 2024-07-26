@@ -1,6 +1,8 @@
 package com.lutech.notepad.adapter
 
 import android.app.Activity
+import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
 import android.view.ActionMode
 import android.view.LayoutInflater
 import android.view.Menu
@@ -38,6 +40,11 @@ class TaskDeletedAdapter(
         fun setData(task: Task) {
             title.text = if (task.title == "") "Untitled" else task.title
             lastEdit.text = task.lastEdit
+
+            val background = item.background as GradientDrawable
+            background.setColor(Color.parseColor(task.color))
+            item.background = background
+
         }
 
     }
