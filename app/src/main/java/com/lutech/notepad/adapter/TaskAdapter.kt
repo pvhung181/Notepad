@@ -2,6 +2,8 @@ package com.lutech.notepad.adapter
 
 import android.app.Activity
 import android.content.Intent
+import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.view.ActionMode
 import android.view.LayoutInflater
@@ -19,6 +21,8 @@ import com.lutech.notepad.R.id
 import com.lutech.notepad.R.layout
 import com.lutech.notepad.constants.TASK
 import com.lutech.notepad.constants.TASK_CONTENT
+import com.lutech.notepad.constants.TASK_DEFAULT_COLOR
+import com.lutech.notepad.constants.TASK_DEFAULT_DARK_COLOR
 import com.lutech.notepad.constants.TASK_ID
 import com.lutech.notepad.constants.TASK_LAST_EDIT
 import com.lutech.notepad.constants.TASK_TITLE
@@ -41,11 +45,18 @@ class TaskAdapter(
         private val title: TextView = itemView.findViewById(id.task_title)
         private val lastEdit: TextView = itemView.findViewById(id.task_last_edit)
         val item: View = itemView.findViewById(id.note_item)
+        //val background: View = itemView.findViewById(id.task_background)
         val overlay: View = itemView.findViewById(id.view_overlay)
 
         fun setData(task: Task) {
             title.text = if(task.title == "") "Untitled" else task.title
             lastEdit.text = task.lastEdit
+
+            val background = item.background as GradientDrawable
+            background.setColor(Color.parseColor(task.color))
+            item.background = background
+
+            //background.setBackgroundColor(Color.parseColor(task.color))
         }
 
     }
@@ -147,6 +158,8 @@ class TaskAdapter(
                 bundle.putString(TASK_TITLE, tasks[position].title)
                 bundle.putString(TASK_CONTENT, tasks[position].content)
                 bundle.putString(TASK_LAST_EDIT, tasks[position].lastEdit)
+                bundle.putString(TASK_DEFAULT_COLOR, tasks[position].color)
+                bundle.putString(TASK_DEFAULT_DARK_COLOR, tasks[position].darkColor)
 
                 val it = Intent(activity, AddActivity::class.java)
                 it.putExtra(TASK, bundle)

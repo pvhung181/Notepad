@@ -6,6 +6,7 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.lutech.notepad.constants.TASK
 import com.lutech.notepad.constants.TASK_DEFAULT_COLOR
+import com.lutech.notepad.constants.TASK_DEFAULT_DARK_COLOR
 import com.lutech.notepad.utils.formatDate
 import java.text.SimpleDateFormat
 import java.time.LocalDateTime
@@ -33,6 +34,9 @@ data class Task(
 
     @ColumnInfo(name = "color")
     var color: String = TASK_DEFAULT_COLOR,
+
+    @ColumnInfo(name = "dark_color")
+    var darkColor: String = TASK_DEFAULT_DARK_COLOR,
 
     @ColumnInfo(name = "is_deleted")
     var isDeleted: Boolean = false

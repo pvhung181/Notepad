@@ -2,7 +2,11 @@ package com.lutech.notepad.ui.add
 
 import android.content.Intent
 import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
+import android.graphics.drawable.Drawable
+import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
+import android.util.Log
 import android.view.Gravity
 import android.view.Menu
 import android.view.MenuItem
@@ -11,7 +15,6 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.GridLayout
-import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
@@ -21,12 +24,15 @@ import androidx.lifecycle.ViewModelProvider
 import com.lutech.notepad.R
 import com.lutech.notepad.constants.TASK
 import com.lutech.notepad.constants.TASK_CONTENT
+import com.lutech.notepad.constants.TASK_DEFAULT_COLOR
+import com.lutech.notepad.constants.TASK_DEFAULT_DARK_COLOR
 import com.lutech.notepad.constants.TASK_ID
 import com.lutech.notepad.constants.TASK_LAST_EDIT
 import com.lutech.notepad.constants.TASK_TITLE
 import com.lutech.notepad.data.getColors
 import com.lutech.notepad.databinding.ActivityAddBinding
 import com.lutech.notepad.model.Task
+import com.lutech.notepad.utils.darkenColor
 import com.lutech.notepad.utils.formatDate
 import java.util.Date
 
@@ -36,6 +42,14 @@ class AddActivity : AppCompatActivity() {
     var isUpdate: Boolean = false
     lateinit var toolbar: Toolbar
     lateinit var addViewModel: AddViewModel
+
+    var selectedColor: String = TASK_DEFAULT_COLOR
+    var darkSelectedColor: String = TASK_DEFAULT_DARK_COLOR
+
+    var cSelectedColor: String = TASK_DEFAULT_COLOR
+    var cDarkSelectedColor: String = TASK_DEFAULT_DARK_COLOR
+
+
     var task: Task = Task()
 
 
@@ -57,6 +71,13 @@ class AddActivity : AppCompatActivity() {
                 task.title = bundle.getString(TASK_TITLE)!!
                 task.content = bundle.getString(TASK_CONTENT)!!
                 task.lastEdit = bundle.getString(TASK_LAST_EDIT)!!
+                task.color = bundle.getString(TASK_DEFAULT_COLOR)!!
+                task.darkColor = bundle.getString(TASK_DEFAULT_DARK_COLOR)!!
+                selectedColor = task.color
+                darkSelectedColor = task.darkColor
+                setCColor()
+                applyColor()
+
             }
 
         }
@@ -81,6 +102,9 @@ class AddActivity : AppCompatActivity() {
                 task.title = binding.titleEditText.text.toString()
                 task.content = binding.contentEditText.text.toString()
                 task.lastEdit = formatDate(Date())
+                task.color = selectedColor
+                task.darkColor = darkSelectedColor
+
                 if (isUpdate) {
                     addViewModel.update(task)
                     Toast.makeText(this, "update successfully", Toast.LENGTH_SHORT).show()
@@ -88,6 +112,7 @@ class AddActivity : AppCompatActivity() {
                     addViewModel.insert(task)
                     Toast.makeText(this, "Add successfully", Toast.LENGTH_SHORT).show()
                     clearInput()
+                    onBackPressedDispatcher.onBackPressed()
                 }
             }
 
@@ -124,7 +149,6 @@ class AddActivity : AppCompatActivity() {
     }
 
     private fun showColorPickerDialog() {
-        var selectedColor: String? = null
         val view = layoutInflater.inflate(R.layout.pick_color, null)
         val colorGrid = view.findViewById<GridLayout>(R.id.colorGrid)
 
@@ -167,11 +191,11 @@ class AddActivity : AppCompatActivity() {
                     val frame = colorGrid.getChildAt(i) as FrameLayout
                     val plusText = frame.getChildAt(1) as TextView
 
-                   // Toast.makeText(this, (getColors()[i]==selectedColor).toString(), Toast.LENGTH_SHORT).show()
-                    //Toast.makeText(this, colorGrid.childCount.toString(), Toast.LENGTH_SHORT).show()
-                    plusText.visibility =
-                        if (getColors()[i] == selectedColor) View.VISIBLE
-                        else View.INVISIBLE
+                        if (getColors()[i] == selectedColor) {
+                            plusText.visibility = View.VISIBLE
+                            darkSelectedColor = darkenColor(selectedColor)
+                        }
+                        else plusText.visibility = View.INVISIBLE
                 }
             }
 
@@ -184,6 +208,20 @@ class AddActivity : AppCompatActivity() {
                 //Toast.makeText(this, "Active", Toast.LENGTH_SHORT).show()
             }
 
+            view.findViewById<Button>(R.id.remove_color_button).setOnClickListener {
+                selectedColor = TASK_DEFAULT_COLOR
+                darkSelectedColor = TASK_DEFAULT_DARK_COLOR
+
+                view.findViewById<TextView>(R.id.select_color_title).setBackgroundColor(getColor(R.color.transparent))
+
+                for (i in 0 until colorGrid.childCount) {
+                    val frame = colorGrid.getChildAt(i) as FrameLayout
+                    val plusText = frame.getChildAt(1) as TextView
+                     plusText.visibility = View.INVISIBLE
+                }
+            }
+
+
             colorGrid.addView(frame)
         }
 
@@ -191,12 +229,53 @@ class AddActivity : AppCompatActivity() {
 
 
         val dialog = builder
-            .setNegativeButton("Cancel") { dlg, _ -> dlg.dismiss() }
-            .setPositiveButton("OK") { dlg, _ -> dlg.dismiss() } //Todo
+            .setNegativeButton("Cancel") { dlg, _ ->
+                resetCurrentColor()
+                //todo
+//                selectedColor = TASK_DEFAULT_COLOR
+//                darkSelectedColor = TASK_DEFAULT_DARK_COLOR
+                dlg.dismiss() }
+            .setPositiveButton("OK") { dlg, _ ->
+                applyColor()
+                setCColor()
+                task.color = selectedColor
+                task.color = darkSelectedColor
+                dlg.dismiss()
+            } //Todo
             .setView(view)
             .create()
         dialog.show()
 
+    }
+
+    private fun resetDefaultColor() {
+        selectedColor = TASK_DEFAULT_COLOR
+        darkSelectedColor = TASK_DEFAULT_DARK_COLOR
+        setTextLayoutBackground(selectedColor)
+        binding.toolbar.setBackgroundColor(Color.parseColor(darkSelectedColor))
+    }
+
+    private fun resetCurrentColor() {
+        selectedColor = cSelectedColor
+        darkSelectedColor = cDarkSelectedColor
+    }
+
+    private fun applyColor() {
+        setTextLayoutBackground(selectedColor)
+        binding.toolbar.setBackgroundColor(Color.parseColor(darkSelectedColor))
+        binding.addLayout.setBackgroundColor(Color.parseColor(darkSelectedColor))
+    }
+
+    private fun setTextLayoutBackground(color: String) {
+        val background = binding.textLayout.background as GradientDrawable
+        background.setColor(Color.parseColor(color))
+        binding.textLayout.background = background
+
+    }
+
+    private fun setCColor() {
+        cSelectedColor = selectedColor
+        cDarkSelectedColor = darkSelectedColor
     }
 
 }

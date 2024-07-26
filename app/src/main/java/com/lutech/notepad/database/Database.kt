@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import com.lutech.notepad.database.dao.TaskDao
 import com.lutech.notepad.model.Task
 
-@Database(entities = [Task::class], version = 3)
+@Database(entities = [Task::class], version = 4)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun taskDao(): TaskDao
 

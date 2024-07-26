@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
+
     android:shape="rectangle">
     <corners android:radius="@dimen/_4sdp"/>
     <gradient
-        android:startColor="@color/customPrimary"
-        android:endColor="@color/white_yellow"
+        android:startColor="@color/alpha_50_white_yellow"
+        android:endColor="@color/alpha_50_white"
+
         android:angle="90"/>
     <stroke
         android:color="@color/customPrimary"

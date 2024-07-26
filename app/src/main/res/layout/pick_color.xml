@@ -26,7 +26,7 @@
     </GridLayout>
 
     <Button
-        android:id="@+id/removeColorButton"
+        android:id="@+id/remove_color_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/remove_the_color"
