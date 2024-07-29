@@ -6,7 +6,10 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.lutech.notepad.database.AppDatabase
+import com.lutech.notepad.database.repository.CategoryRepository
+import com.lutech.notepad.database.repository.CategoryRepositoryImpl
 import com.lutech.notepad.database.repository.TaskRepositoryImpl
+import com.lutech.notepad.model.Category
 import com.lutech.notepad.model.Task
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Job
@@ -20,9 +23,14 @@ class TaskViewModel(
     private val repository: TaskRepositoryImpl =
         TaskRepositoryImpl(AppDatabase.getDatabase(application).taskDao())
 
+    private val categoryRepository: CategoryRepositoryImpl =
+        CategoryRepositoryImpl((AppDatabase.getDatabase(application).categoryDao()))
+
     private val _tasks = repository.getAllTask()
 
     val tasks: LiveData<MutableList<Task>> = _tasks
+
+    var categories: LiveData<MutableList<Category>> = categoryRepository.getAllCategory()
 
     lateinit var lastTask: Task
 
@@ -33,6 +41,7 @@ class TaskViewModel(
     fun getText(): MutableLiveData<String> {
         return mutableLiveData
     }
+
 
     fun moveToTrash(task: Task) {
         viewModelScope.launch {
@@ -75,4 +84,17 @@ class TaskViewModel(
             repository.deleteTask(task)
         }
     }
+
+    fun deleteCategory(category: Category) {
+        viewModelScope.launch {
+            categoryRepository.deleteCategory(category)
+        }
+    }
+
+    fun updateCategory(category: Category) {
+        viewModelScope.launch {
+            categoryRepository.updateCategory(category)
+        }
+    }
+
 }

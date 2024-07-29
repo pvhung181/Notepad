@@ -6,9 +6,11 @@ import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
+import android.view.GestureDetector
 import android.view.Gravity
 import android.view.Menu
 import android.view.MenuItem
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
@@ -19,6 +21,8 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
+import androidx.core.content.ContextCompat
+import androidx.core.view.GestureDetectorCompat
 import androidx.lifecycle.ViewModelProvider
 import com.lutech.notepad.R
 import com.lutech.notepad.constants.TASK
@@ -39,7 +43,7 @@ import com.lutech.notepad.utils.formatDate
 import java.util.Date
 
 
-class AddActivity : AppCompatActivity() {
+class AddActivity : AppCompatActivity(){
     lateinit var binding: ActivityAddBinding
     var isUpdate: Boolean = false
     lateinit var toolbar: Toolbar
@@ -173,9 +177,30 @@ class AddActivity : AppCompatActivity() {
 
             R.id.activity_add_action_read_mode -> {
                 //todo
-                binding.titleEditText.isFocusable = false
-                binding.titleEditText.isFocusableInTouchMode = false
+                binding.titleEditText.isEnabled = false
                 binding.contentEditText.isEnabled = false
+                binding.contentEditText.setTextColor(ContextCompat.getColor(this, R.color.black))
+                binding.titleEditText.setTextColor(ContextCompat.getColor(this, R.color.black))
+
+//                val gestureDetector = GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
+//                    override fun onDoubleTap(e: MotionEvent): Boolean {
+//                        Toast.makeText(this@AddActivity, "Double tap", Toast.LENGTH_LONG).show()
+//                        return true
+//                    }
+//
+//                    override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
+//                        Toast.makeText(this@AddActivity, "Tap", Toast.LENGTH_LONG).show()
+//                        return true
+//                    }
+//                })
+
+                //binding.textLayout.setOnTouchListener { v, event -> gestureDetector.onTouchEvent(event)  }
+                
+                
+                //editText.setHintTextColor(ContextCompat.getColor(context, R.color.normal_hint_color))
+            }
+            R.id.activity_add_action_categorize -> {
+                showCategorizeDialog()
             }
 
             R.id.activity_add_action_show_info -> {
@@ -284,7 +309,6 @@ class AddActivity : AppCompatActivity() {
             .setPositiveButton("OK") { dlg, _ ->
                 applyColor()
                 setCColor()
-                //Todo
                 updateTask(
                     task.copy(
                         title = binding.titleEditText.text.toString(),
@@ -299,13 +323,6 @@ class AddActivity : AppCompatActivity() {
             .create()
         dialog.show()
 
-    }
-
-    private fun resetDefaultColor() {
-        selectedColor = TASK_DEFAULT_COLOR
-        darkSelectedColor = TASK_DEFAULT_DARK_COLOR
-        setTextLayoutBackground(selectedColor)
-        binding.toolbar.setBackgroundColor(Color.parseColor(darkSelectedColor))
     }
 
     private fun resetCurrentColor() {
@@ -365,13 +382,30 @@ class AddActivity : AppCompatActivity() {
     }
 
     fun updateTask(t: Task) {
-//        task.title = binding.titleEditText.text.toString()
-//        task.content = binding.contentEditText.text.toString()
-//        task.lastEdit = formatDate(Date())
-//        task.color = selectedColor
-//        task.darkColor = darkSelectedColor
-
         task = t
     }
+
+    fun showCategorizeDialog() {
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("Choose some animals")
+
+        taskViewModel.categories.observe(this) {
+            builder.setMultiChoiceItems(it.map { category -> category.categoryName }.toTypedArray(), BooleanArray(it.size)) { dialog, which, isChecked ->
+
+            }
+        }
+
+
+
+        builder.setPositiveButton("OK") { dialog, which ->
+
+        }
+        builder.setNegativeButton("Cancel", null)
+
+        val dialog = builder.create()
+        dialog.show()
+    }
+
+
 
 }

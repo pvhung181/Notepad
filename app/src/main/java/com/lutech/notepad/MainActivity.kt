@@ -85,6 +85,10 @@ class MainActivity : AppCompatActivity() {
         navController = findNavController(R.id.nav_host_fragment_content_main)
         toolbar = binding.appBarMain.toolbar
         taskViewModel = ViewModelProvider(this)[TaskViewModel::class.java]
+
+
+
+
     }
 
     private fun setupDrawer() {

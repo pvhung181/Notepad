@@ -10,8 +10,15 @@ import android.view.ViewGroup
 import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.recyclerview.widget.ItemTouchHelper
+import androidx.recyclerview.widget.RecyclerView
 import com.lutech.notepad.R
+import com.lutech.notepad.adapter.CategoryAdapter
+import com.lutech.notepad.adapter.TaskAdapter
 import com.lutech.notepad.databinding.FragmentCategoryBinding
+import com.lutech.notepad.model.Category
+import com.lutech.notepad.ui.home.HomeViewModel
+import java.util.Collections
 
 class CategoryFragment : Fragment(), MenuProvider {
 
@@ -19,19 +26,80 @@ class CategoryFragment : Fragment(), MenuProvider {
 
     private val binding get() = _binding!!
 
+    private lateinit var categoryViewModel: CategoryViewModel
+    private lateinit var adapter: CategoryAdapter
+    private var draggedItemIndex: Int? = null
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
 
-        val categoryViewModel =
-            ViewModelProvider(this).get(CategoryViewModel::class.java)
+        categoryViewModel =
+            ViewModelProvider(this)[CategoryViewModel::class.java]
 
         _binding = FragmentCategoryBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
+        val recycler = binding.recyclerCategory
+        adapter = CategoryAdapter(activity = requireActivity())
+        recycler.adapter = adapter
+        categoryViewModel.categories.observe(viewLifecycleOwner) {
+            adapter.setCategory(it)
+            categoryViewModel.categoryCheck = it
+            binding.addBtn.isEnabled = true
+        }
+
+        setListeners()
+
+
+        val itemTouchHelper: ItemTouchHelper = ItemTouchHelper(
+            object : ItemTouchHelper.Callback(){
+                override fun getMovementFlags(
+                    recyclerView: RecyclerView,
+                    viewHolder: RecyclerView.ViewHolder
+                ): Int {
+                    return makeMovementFlags(
+                        ItemTouchHelper.UP or ItemTouchHelper.DOWN,
+                        0
+                    )
+                }
+
+                override fun onMove(
+                    recyclerView: RecyclerView,
+                    viewHolder: RecyclerView.ViewHolder,
+                    target: RecyclerView.ViewHolder
+                ): Boolean {
+                    draggedItemIndex = viewHolder.bindingAdapterPosition
+                    val targetIndex = target.bindingAdapterPosition
+
+                    Collections.swap(adapter.categories, draggedItemIndex!!, targetIndex)
+                    adapter.notifyItemMoved(draggedItemIndex!!, targetIndex)
+
+                    return false
+                }
+
+                override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+
+                }
+
+            }
+        )
+
+        itemTouchHelper.attachToRecyclerView(recycler)
+
         return root
+    }
+
+    private fun setListeners() {
+        binding.addBtn.setOnClickListener {
+            categoryViewModel.insertCategory(Category(categoryName = binding.categoryEditText.text.toString()))
+            //binding.categoryEditText.text.clear()
+            binding.categoryEditText.requestFocus()
+        }
+
+
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

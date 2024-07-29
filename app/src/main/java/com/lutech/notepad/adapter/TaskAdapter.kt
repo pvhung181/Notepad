@@ -42,7 +42,7 @@ class TaskAdapter(
     var selectList = mutableListOf<Task>()
 
 
-    class ViewHolder(ItemView: View) : RecyclerView.ViewHolder(ItemView) {
+    class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val title: TextView = itemView.findViewById(id.task_title)
         private val lastEdit: TextView = itemView.findViewById(id.task_last_edit)
         val item: View = itemView.findViewById(id.note_item)

@@ -13,18 +13,7 @@ class AddViewModel(
     application: Application
 ) : AndroidViewModel(application) {
 
-    private val repository: TaskRepositoryImpl
-
-    init {
-        val taskDao = AppDatabase.getDatabase(application).taskDao()
-        repository = TaskRepositoryImpl(taskDao)
-    }
-
-    fun insert(task: Task) {
-        viewModelScope.launch {
-            repository.saveTask(task)
-        }
-    }
+    private val repository: TaskRepositoryImpl = TaskRepositoryImpl(AppDatabase.getDatabase(application).taskDao())
 
     fun update(task: Task) {
         viewModelScope.launch {

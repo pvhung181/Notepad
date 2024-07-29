@@ -16,9 +16,7 @@
             android:title="@string/trash" />
     </group>
 
-    <group
-        android:id="@+id/backup_section"
-        >
+    <group android:id="@+id/backup_section">
         <item
             android:id="@+id/nav_backup"
             android:icon="@drawable/backup_ic"
