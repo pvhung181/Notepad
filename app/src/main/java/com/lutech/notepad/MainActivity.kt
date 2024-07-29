@@ -1,20 +1,14 @@
 package com.lutech.notepad
 
-import android.app.SearchManager
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.view.ActionMode
-import android.view.ContextMenu
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import android.widget.Toast
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.graphics.drawable.DrawerArrowDrawable
-import androidx.appcompat.widget.SearchView
 import androidx.appcompat.widget.Toolbar
 import androidx.core.content.ContextCompat
 import androidx.drawerlayout.widget.DrawerLayout
@@ -41,6 +35,7 @@ import com.lutech.notepad.ui.backup.BackupActivity
 import com.lutech.notepad.ui.help.HelpActivity
 import com.lutech.notepad.ui.privacy_policy.PrivacyPolicyActivity
 import com.lutech.notepad.ui.setting.SettingActivity
+
 
 class MainActivity : AppCompatActivity() {
 
@@ -85,10 +80,6 @@ class MainActivity : AppCompatActivity() {
         navController = findNavController(R.id.nav_host_fragment_content_main)
         toolbar = binding.appBarMain.toolbar
         taskViewModel = ViewModelProvider(this)[TaskViewModel::class.java]
-
-
-
-
     }
 
     private fun setupDrawer() {
@@ -176,6 +167,19 @@ class MainActivity : AppCompatActivity() {
             drawerLayout.close()
             true
         }
+
+
+        val m = navView.menu
+        val categoryTitleItem = m.findItem(R.id.category_title_item)
+        val subMenu: Menu? = categoryTitleItem.subMenu
+
+
+        taskViewModel.categories.observe(this) {
+            it.forEachIndexed { index, category ->
+                subMenu?.add(Menu.NONE, index, Menu.NONE, category.categoryName)?.setIcon(R.drawable.tag_icon)
+            }
+        }
+
 
 
     }

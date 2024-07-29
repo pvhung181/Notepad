@@ -26,7 +26,9 @@
     <group
         android:id="@+id/categories_section"
         android:checkableBehavior="single">
-        <item android:title="@string/categories">
+        <item
+            android:id="@+id/category_title_item"
+            android:title="@string/categories">
             <menu>
                 <item
                     android:id="@+id/nav_categories"
@@ -34,6 +36,7 @@
                     android:title="@string/edit_categories" />
             </menu>
         </item>
+
     </group>
 
 
