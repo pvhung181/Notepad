@@ -53,7 +53,79 @@
             android:inputType="textMultiLine"
             android:gravity="top"/>
 
+        <LinearLayout
+            android:id="@+id/format_bar"
+
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <ImageView
+                android:id="@+id/bold_btn"
+                android:padding="@dimen/_6sdp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/bold_ic"/>
+
+            <ImageView
+                android:id="@+id/italic_btn"
+                android:padding="@dimen/_6sdp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/italic_ic"/>
+
+            <ImageView
+                android:id="@+id/underlined_btn"
+                android:padding="@dimen/_6sdp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/underlined_ic"/>
+
+            <ImageView
+                android:id="@+id/strikethrough_btn"
+                android:padding="@dimen/_6sdp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/strikethrough_ic"/>
+
+            <ImageView
+                android:id="@+id/color_fill_btn"
+                android:padding="@dimen/_6sdp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/color_fill_ic"/>
+
+            <ImageView
+                android:id="@+id/color_text_btn"
+                android:padding="@dimen/_6sdp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/color_text_ic"/>
+
+            <ImageView
+                android:id="@+id/format_size_btn"
+                android:padding="@dimen/_6sdp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/format_size_ic"/>
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="1"/>
+
+            <ImageView
+                android:id="@+id/cancel_btn"
+                android:padding="@dimen/_6sdp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/close_ic"/>
+
+        </LinearLayout>
+
 
     </LinearLayout>
+
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -12,13 +12,13 @@ import com.lutech.notepad.model.Task
 
 @Dao
 interface TaskDao {
-    @Query("SELECT * FROM task where is_deleted = 0")
+    @Query("SELECT * FROM task where isDeleted = 0")
     fun getAll(): LiveData<MutableList<Task>>
 
-    @Query("SELECT * FROM task where is_deleted = 1")
+    @Query("SELECT * FROM task where isDeleted = 1")
     fun getAllDeletedNotes(): LiveData<MutableList<Task>>
 
-    @Query("select * from task order by task_id desc  limit 1")
+    @Query("select * from task order by taskId desc  limit 1")
     suspend fun getLastTask(): Task
 
     @Insert

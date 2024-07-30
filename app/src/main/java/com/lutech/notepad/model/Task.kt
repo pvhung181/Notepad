@@ -17,27 +17,19 @@ import java.util.Date
 )
 data class Task(
     @PrimaryKey(autoGenerate = true)
-    @ColumnInfo(name = "task_id")
-    var id : Int = 0,
+    var taskId: Int = 0,
 
-    @ColumnInfo(name = "title")
     var title: String = "",
 
-    @ColumnInfo(name = "content")
     var content: String = "",
 
-    @ColumnInfo(name = "creation_date")
     var createDate: String = formatDate(Date()),
 
-    @ColumnInfo(name = "last_edit")
     var lastEdit: String = formatDate(Date()),
 
-    @ColumnInfo(name = "color")
     var color: String = TASK_DEFAULT_COLOR,
 
-    @ColumnInfo(name = "dark_color")
     var darkColor: String = TASK_DEFAULT_DARK_COLOR,
 
-    @ColumnInfo(name = "is_deleted")
     var isDeleted: Boolean = false
 )

@@ -1,12 +1,15 @@
 package com.lutech.notepad
 
+import android.app.Activity
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.provider.OpenableColumns
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.ActionBarDrawerToggle
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.graphics.drawable.DrawerArrowDrawable
 import androidx.appcompat.widget.Toolbar
@@ -19,6 +22,9 @@ import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupWithNavController
 import com.google.android.material.navigation.NavigationView
+import com.lutech.notepad.constants.CATEGORY_ALL
+import com.lutech.notepad.constants.CATEGORY_ID
+import com.lutech.notepad.constants.CATEGORY_NAME
 import com.lutech.notepad.constants.TASK
 import com.lutech.notepad.constants.TASK_CONTENT
 import com.lutech.notepad.constants.TASK_CREATION_DATE
@@ -35,6 +41,8 @@ import com.lutech.notepad.ui.backup.BackupActivity
 import com.lutech.notepad.ui.help.HelpActivity
 import com.lutech.notepad.ui.privacy_policy.PrivacyPolicyActivity
 import com.lutech.notepad.ui.setting.SettingActivity
+import java.io.BufferedReader
+import java.io.InputStreamReader
 
 
 class MainActivity : AppCompatActivity() {
@@ -46,6 +54,19 @@ class MainActivity : AppCompatActivity() {
     private lateinit var navController: NavController
     private lateinit var toolbar: Toolbar
     private lateinit var taskViewModel: TaskViewModel
+
+    private val openDocumentLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            result.data?.data?.let { uri ->
+                val content = readFromFile(uri)
+                val title =  getFileName(uri)
+                taskViewModel.insertTask(Task(
+                    content = content,
+                    title = title
+                ))
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -107,7 +128,7 @@ class MainActivity : AppCompatActivity() {
                     val task = taskViewModel.lastTask
                     
                     val bundle = Bundle()
-                    bundle.putInt(TASK_ID, task.id);
+                    bundle.putInt(TASK_ID, task.taskId);
                     bundle.putString(TASK_TITLE, task.title)
                     bundle.putString(TASK_CONTENT, task.content)
                     bundle.putString(TASK_LAST_EDIT, task.lastEdit)
@@ -133,7 +154,10 @@ class MainActivity : AppCompatActivity() {
         }
 
         navView.menu.findItem(R.id.nav_home).setOnMenuItemClickListener {
-            navController.navigate(R.id.nav_home)
+            val bundle = Bundle().apply {
+                putString(CATEGORY_NAME, CATEGORY_ALL)
+            }
+            navController.navigate(R.id.nav_home, bundle)
             drawerLayout.close()
             true
         }
@@ -176,12 +200,19 @@ class MainActivity : AppCompatActivity() {
 
         taskViewModel.categories.observe(this) {
             it.forEachIndexed { index, category ->
+                subMenu?.removeItem(index)
                 subMenu?.add(Menu.NONE, index, Menu.NONE, category.categoryName)?.setIcon(R.drawable.tag_icon)
+                subMenu?.findItem(index)?.setOnMenuItemClickListener {
+                    val bundle = Bundle().apply {
+                        putString(CATEGORY_NAME, category.categoryName)
+                        putInt(CATEGORY_ID, category.categoryId)
+                    }
+                    navController.navigate(R.id.nav_home, bundle)
+                    drawerLayout.close()
+                    true
+                }
             }
         }
-
-
-
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -190,38 +221,53 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        if (item.itemId == R.id.action_sort) {
-            showSortDialog()
-        } else if (item.itemId == R.id.action_search) {
-            binding.appBarMain.toolbar.visibility = View.GONE
-            binding.appBarMain.searchToolbar.visibility = View.VISIBLE
-            binding.appBarMain.searchField.requestFocus()
+        when(item.itemId) {
+            R.id.action_search -> {
+                binding.appBarMain.toolbar.visibility = View.GONE
+                binding.appBarMain.searchToolbar.visibility = View.VISIBLE
+                binding.appBarMain.searchField.requestFocus()
+            }
+            R.id.activity_main_action_import -> {
+
+                val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                    addCategory(Intent.CATEGORY_OPENABLE)
+                    type = "text/plain"
+                }
+                openDocumentLauncher.launch(intent)
+
+            }
         }
         return super.onOptionsItemSelected(item)
-    }
-
-    private fun showSortDialog() {
-        val builder = AlertDialog.Builder(this)
-        var checkedItem = 0
-        builder.setTitle("Sort")
-        val listItems = arrayOf(
-            "edit date: from newest",
-            "edit date: from oldest",
-            "title: A to Z",
-            "title: Z to A",
-            )
-
-        val dialog = builder.setSingleChoiceItems(listItems, checkedItem) { dlg, which ->
-            checkedItem = which
-        }.setNegativeButton("Cancel") { dlg, _ -> dlg.dismiss() }
-            .setPositiveButton("Sort") { dlg, _ -> dlg.dismiss() } //Todo
-            .create()
-        dialog.show()
     }
 
     override fun onSupportNavigateUp(): Boolean {
         val navController = findNavController(R.id.nav_host_fragment_content_main)
         return navController.navigateUp(appBarConfiguration) || super.onSupportNavigateUp()
+    }
+
+    private fun readFromFile(uri: Uri): String {
+        val stringBuilder = StringBuilder()
+        contentResolver.openInputStream(uri)?.use { inputStream ->
+            BufferedReader(InputStreamReader(inputStream)).use { reader ->
+                var line: String? = reader.readLine()
+                while (line != null) {
+                    stringBuilder.append(line)
+                    stringBuilder.append("\n")
+                    line = reader.readLine()
+                }
+            }
+        }
+        return stringBuilder.toString()
+    }
+
+    private fun getFileName(uri: Uri): String {
+        var fileName = "unknown"
+        contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+            val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+            cursor.moveToFirst()
+            fileName = cursor.getString(nameIndex)
+        }
+        return fileName
     }
 
 //    override fun onCreateContextMenu(

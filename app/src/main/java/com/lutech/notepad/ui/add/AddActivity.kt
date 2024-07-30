@@ -1,16 +1,24 @@
 package com.lutech.notepad.ui.add
 
+import android.app.Activity
+import android.app.Dialog
+import android.app.ProgressDialog.show
+import android.content.DialogInterface
+import android.content.DialogInterface.OnMultiChoiceClickListener
 import android.content.Intent
 import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.GradientDrawable
+import android.net.Uri
 import android.os.Bundle
 import android.text.Editable
+import android.text.Spannable
 import android.text.TextWatcher
-import android.view.GestureDetector
+import android.text.style.StyleSpan
+import android.text.style.UnderlineSpan
 import android.view.Gravity
 import android.view.Menu
 import android.view.MenuItem
-import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
@@ -18,13 +26,17 @@ import android.widget.FrameLayout
 import android.widget.GridLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.content.ContextCompat
-import androidx.core.view.GestureDetectorCompat
 import androidx.lifecycle.ViewModelProvider
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.RecyclerView.LayoutManager
 import com.lutech.notepad.R
+import com.lutech.notepad.adapter.CategoryDialogAdapter
 import com.lutech.notepad.constants.TASK
 import com.lutech.notepad.constants.TASK_CONTENT
 import com.lutech.notepad.constants.TASK_CREATION_DATE
@@ -40,10 +52,16 @@ import com.lutech.notepad.ui.TaskViewModel
 import com.lutech.notepad.utils.countWord
 import com.lutech.notepad.utils.darkenColor
 import com.lutech.notepad.utils.formatDate
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.IOException
 import java.util.Date
 
 
-class AddActivity : AppCompatActivity(){
+class AddActivity : AppCompatActivity() {
     lateinit var binding: ActivityAddBinding
     var isUpdate: Boolean = false
     lateinit var toolbar: Toolbar
@@ -57,22 +75,23 @@ class AddActivity : AppCompatActivity(){
 
     lateinit var taskViewModel: TaskViewModel
 
-    var task: Task = Task()
 
+
+    var task: Task = Task()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         addViewModel = ViewModelProvider(this).get(AddViewModel::class.java)
         binding = ActivityAddBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        setupFormatBarListeners()
         isUpdate = intent.getBundleExtra(TASK) != null
         toolbar = binding.toolbar
         taskViewModel = ViewModelProvider(this)[TaskViewModel::class.java]
 
-
         val bundle = intent.getBundleExtra(TASK)
         if (bundle != null) {
-            task.id = bundle.getInt(TASK_ID)
+            task.taskId = bundle.getInt(TASK_ID)
             task.title = bundle.getString(TASK_TITLE)!!
             task.content = bundle.getString(TASK_CONTENT)!!
             task.lastEdit = bundle.getString(TASK_LAST_EDIT)!!
@@ -88,6 +107,10 @@ class AddActivity : AppCompatActivity(){
 
         binding.titleEditText.setText(task.title)
         binding.contentEditText.setText(task.content)
+
+        binding.cancelBtn.setOnClickListener {
+            binding.formatBar.visibility = View.GONE
+        }
 
         binding.titleEditText.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
@@ -123,6 +146,104 @@ class AddActivity : AppCompatActivity(){
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
     }
 
+    fun setupFormatBarListeners() {
+        binding.boldBtn.setOnClickListener {
+            if(binding.boldBtn.foreground == null) {
+                binding.boldBtn.apply {
+                    foreground =  ColorDrawable(ContextCompat.getColor(this@AddActivity, R.color.black))
+                    alpha = 0.1f
+                }
+            }
+            else {
+                binding.boldBtn.foreground = null
+                binding.boldBtn.alpha = 1f
+            }
+        }
+
+        binding.italicBtn.setOnClickListener {
+            if(binding.italicBtn.foreground == null) {
+                binding.italicBtn.apply {
+                    foreground =  ColorDrawable(ContextCompat.getColor(this@AddActivity, R.color.black))
+                    alpha = 0.1f
+                }
+            }
+            else {
+                binding.italicBtn.foreground = null
+                binding.italicBtn.alpha = 1f
+            }
+        }
+        
+        binding.underlinedBtn.setOnClickListener {
+            if(binding.underlinedBtn.foreground == null) {
+                binding.underlinedBtn.apply {
+                    foreground =  ColorDrawable(ContextCompat.getColor(this@AddActivity, R.color.black))
+                    alpha = 0.1f
+                }
+            }
+            else {
+                binding.underlinedBtn.foreground = null
+                binding.underlinedBtn.alpha = 1f
+            }
+        }
+
+        binding.strikethroughBtn.setOnClickListener {
+            if(binding.strikethroughBtn.foreground == null) {
+                binding.strikethroughBtn.apply {
+                    foreground =  ColorDrawable(ContextCompat.getColor(this@AddActivity, R.color.black))
+                    alpha = 0.1f
+                }
+            }
+            else {
+                binding.strikethroughBtn.foreground = null
+                binding.strikethroughBtn.alpha = 1f
+            }
+        }
+
+        binding.colorFillBtn.setOnClickListener {
+            if(binding.colorFillBtn.foreground == null) {
+                binding.colorFillBtn.apply {
+                    foreground =  ColorDrawable(ContextCompat.getColor(this@AddActivity, R.color.black))
+                    alpha = 0.1f
+                }
+            }
+            else {
+                binding.colorFillBtn.foreground = null
+                binding.colorFillBtn.alpha = 1f
+            }
+        }
+
+        binding.colorTextBtn.setOnClickListener {
+            if(binding.colorTextBtn.foreground == null) {
+                binding.colorTextBtn.apply {
+                    foreground =  ColorDrawable(ContextCompat.getColor(this@AddActivity, R.color.black))
+                    alpha = 0.1f
+                }
+            }
+            else {
+                binding.colorTextBtn.foreground = null
+                binding.colorTextBtn.alpha = 1f
+            }
+        }
+
+        binding.formatSizeBtn.setOnClickListener {
+            if(binding.formatSizeBtn.foreground == null) {
+                binding.formatSizeBtn.apply {
+                    foreground =  ColorDrawable(ContextCompat.getColor(this@AddActivity, R.color.black))
+                    alpha = 0.1f
+                }
+            }
+            else {
+                binding.formatSizeBtn.foreground = null
+                binding.formatSizeBtn.alpha = 1f
+            }
+        }
+
+
+
+
+    }
+
+
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.activity_add_option_menu, menu)
         return super.onCreateOptionsMenu(menu)
@@ -144,6 +265,17 @@ class AddActivity : AppCompatActivity(){
 
                 addViewModel.update(task)
                 Toast.makeText(this, "update successfully", Toast.LENGTH_SHORT).show()
+            }
+
+            R.id.activity_add_action_delete -> {
+                val categoryBuilder = AlertDialog.Builder(this)
+                categoryBuilder.setMessage("The ${task.title} note will be deleted. Are you sure ?")
+                categoryBuilder.setPositiveButton("Delete") { dialog, which ->
+                    taskViewModel.deleteTask(task)
+                    onBackPressedDispatcher.onBackPressed()
+                }
+                    .setNegativeButton("Cancel") { dialog, _ -> dialog.dismiss()}
+                categoryBuilder.create().show()
             }
 
             android.R.id.home -> {
@@ -195,25 +327,35 @@ class AddActivity : AppCompatActivity(){
 //                })
 
                 //binding.textLayout.setOnTouchListener { v, event -> gestureDetector.onTouchEvent(event)  }
-                
-                
+
+
                 //editText.setHintTextColor(ContextCompat.getColor(context, R.color.normal_hint_color))
             }
+
             R.id.activity_add_action_categorize -> {
-                showCategorizeDialog()
+                createCategorizeDialog()
             }
 
             R.id.activity_add_action_show_info -> {
                 showInformationDialog()
             }
+
+            R.id.activity_add_action_export -> {
+                val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+                    addCategory(Intent.CATEGORY_OPENABLE)
+                    type = "text/plain"
+                    putExtra(Intent.EXTRA_TITLE, "${title}.txt")
+                }
+                createDocumentLauncher.launch(intent)
+            }
+
+            R.id.activity_add_action_format_bar -> {
+                if (binding.formatBar.visibility == View.GONE) binding.formatBar.visibility =
+                    View.VISIBLE
+                else binding.formatBar.visibility = View.GONE
+            }
         }
         return super.onOptionsItemSelected(item)
-    }
-
-    private fun clearInput() {
-        binding.titleEditText.text = null
-        binding.contentEditText.text = null
-        binding.titleEditText.requestFocus()
     }
 
     private fun showColorPickerDialog() {
@@ -361,7 +503,6 @@ class AddActivity : AppCompatActivity(){
     }
 
     fun showInformationDialog() {
-
         val string = binding.contentEditText.text.toString()
 
         var message: String = "Words : ${string.countWord()}\n" +
@@ -385,27 +526,87 @@ class AddActivity : AppCompatActivity(){
         task = t
     }
 
-    fun showCategorizeDialog() {
-        val builder = AlertDialog.Builder(this)
-        builder.setTitle("Choose some animals")
+    fun createCategorizeDialog() {
 
-        taskViewModel.categories.observe(this) {
-            builder.setMultiChoiceItems(it.map { category -> category.categoryName }.toTypedArray(), BooleanArray(it.size)) { dialog, which, isChecked ->
+        val categoryBuilder = AlertDialog.Builder(this)
+        categoryBuilder
+            .setTitle("Choose category")
+        val view = layoutInflater.inflate(R.layout.dialog_category_recycler, null)
 
+
+        val recycleview = view.findViewById<RecyclerView>(R.id.recyclerView)
+        var cAdapter: CategoryDialogAdapter = CategoryDialogAdapter(
+            task = task,
+            activity = this@AddActivity
+        )
+        recycleview.adapter = cAdapter
+
+        taskViewModel.categories.observe(this@AddActivity) {
+            taskViewModel.getNoteWithCategory(task.taskId).observe(this@AddActivity) { t ->
+
+                if(it != null && t != null) {
+                    cAdapter.setCategory(it)
+                    if(t.isNotEmpty())cAdapter.setCheckCategory(t[0].categories.toMutableList())
+                }
             }
         }
-
-
-
-        builder.setPositiveButton("OK") { dialog, which ->
-
+        categoryBuilder.setView(view)
+        categoryBuilder.setPositiveButton("OK") { dialog, which ->
+            dialog.dismiss()
         }
-        builder.setNegativeButton("Cancel", null)
+        categoryBuilder.create().show()
 
-        val dialog = builder.create()
-        dialog.show()
     }
 
 
+    private fun applyStyleToSelection(style: Int) {
+        val start = binding.contentEditText.selectionStart
+        val end = binding.contentEditText.selectionEnd
+
+        if (start < 0 || end <= start) return
+
+        val spannable = binding.contentEditText.text as Spannable
+        spannable.setSpan(
+            StyleSpan(style),
+            start,
+            end,
+            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+        )
+    }
+
+    private fun applyUnderlineToSelection() {
+        val start = binding.contentEditText.selectionStart
+        val end = binding.contentEditText.selectionEnd
+
+        if (start < 0 || end <= start) return
+
+        val spannable = binding.contentEditText.text as Spannable
+        spannable.setSpan(
+            UnderlineSpan(),
+            start,
+            end,
+            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+        )
+    }
+
+    private val createDocumentLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                result.data?.data?.let { uri ->
+                    writeTxtFile(uri, task.content)
+                }
+            }
+        }
+
+    private fun writeTxtFile(uri: Uri, content: String) {
+        try {
+            contentResolver.openOutputStream(uri)?.use { outputStream ->
+                outputStream.write(content.toByteArray())
+                outputStream.close()
+            }
+        } catch (e: IOException) {
+            e.printStackTrace()
+        }
+    }
 
 }

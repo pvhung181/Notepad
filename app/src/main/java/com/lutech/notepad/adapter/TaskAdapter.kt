@@ -155,7 +155,7 @@ class TaskAdapter(
                 clickItem(holder);
             } else {
                 val bundle = Bundle()
-                bundle.putInt(TASK_ID, tasks[position].id);
+                bundle.putInt(TASK_ID, tasks[position].taskId);
                 bundle.putString(TASK_TITLE, tasks[position].title)
                 bundle.putString(TASK_CONTENT, tasks[position].content)
                 bundle.putString(TASK_LAST_EDIT, tasks[position].lastEdit)

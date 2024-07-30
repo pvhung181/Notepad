@@ -63,6 +63,10 @@ dependencies {
     //recycler
     implementation("androidx.recyclerview:recyclerview-selection:1.2.0-alpha01")
 
+    implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0-RC")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0-RC")
+
+
 
     implementation("androidx.legacy:legacy-support-v4:1.0.0")
     testImplementation("junit:junit:4.13.2")
