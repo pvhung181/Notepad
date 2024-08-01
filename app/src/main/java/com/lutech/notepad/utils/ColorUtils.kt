@@ -24,3 +24,22 @@ fun darkenColor(hexColor: String): String {
     // Chuyển đổi màu mới thành mã màu hex
     return String.format("#%06X", (0xFFFFFF and darkerColor))
 }
+
+fun getColorWithOpacity(hexColor: String, opacity: Float): String {
+    // Kiểm tra xem mã màu hex có bao gồm dấu '#' hay không
+    val color = if (hexColor.startsWith("#")) hexColor.substring(1) else hexColor
+
+    // Kiểm tra xem mã màu hex có độ dài hợp lệ (6 hoặc 8 ký tự)
+    if (color.length != 6 && color.length != 8) {
+        throw IllegalArgumentException("Invalid hex color length. Must be 6 or 8 characters.")
+    }
+
+    // Tính toán giá trị alpha từ độ mờ đục (opacity)
+    val alpha = (opacity * 255).toInt().coerceIn(0, 255)
+
+    // Chuyển đổi giá trị alpha thành chuỗi hex có 2 ký tự
+    val alphaHex = alpha.toString(16).padStart(2, '0')
+
+    // Kết hợp giá trị alpha hex với mã màu hex
+    return "#$alphaHex$color"
+}

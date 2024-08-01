@@ -30,6 +30,7 @@
             android:exported="false" />
         <activity
             android:name=".ui.add.AddActivity"
+            android:windowSoftInputMode="adjustResize"
             android:exported="false" />
         <activity
             android:name=".MainActivity"

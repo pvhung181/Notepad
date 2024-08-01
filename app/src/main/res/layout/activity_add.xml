@@ -26,6 +26,33 @@
             </androidx.appcompat.widget.Toolbar>
     </com.google.android.material.appbar.AppBarLayout>
 
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/activity_add_search_field"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@color/customPrimary"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageView
+            android:id="@+id/activity_add_back_btn"
+            android:layout_width="@dimen/_24sdp"
+            android:layout_height="@dimen/_24sdp"
+            app:tint="@color/white"
+            android:src="@drawable/back_ic"
+            android:layout_marginStart="@dimen/_16sdp"
+            android:layout_marginEnd="@dimen/_8sdp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"/>
+
+        <androidx.appcompat.widget.SearchView
+            android:id="@+id/activity_add_search_edit_text"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:iconifiedByDefault="false"
+            app:layout_constraintStart_toEndOf="@id/activity_add_back_btn"/>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
     <LinearLayout
         android:id="@+id/text_layout"
         android:layout_width="match_parent"
@@ -51,6 +78,8 @@
             android:layout_weight="1"
             android:hint="@string/enter_text"
             android:inputType="textMultiLine"
+            android:scrollbars="vertical"
+            android:overScrollMode="always"
             android:gravity="top"/>
 
         <LinearLayout

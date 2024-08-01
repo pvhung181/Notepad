@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+
+    android:layout_height="wrap_content">
+    <TextView
+        android:id="@+id/text_size_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Text size 18"
+        android:textSize="18dp"/>
+
+    <SeekBar
+        android:id="@+id/text_size_seek_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:min="6"
+        android:max="64"
+        android:progress="18"/>
+
+    <Button
+        android:id="@+id/set_default_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="SET DEFAULT (18)"
+        />
+
+
+
+
+</LinearLayout>
