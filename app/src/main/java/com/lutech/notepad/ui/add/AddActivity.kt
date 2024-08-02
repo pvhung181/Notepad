@@ -1,12 +1,11 @@
 package com.lutech.notepad.ui.add
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.graphics.Typeface
-import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.GradientDrawable
-import android.media.Image
 import android.net.Uri
 import android.os.Bundle
 import android.text.Editable
@@ -28,6 +27,7 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.InputMethodManager
 import android.widget.Button
 import android.widget.EditText
 import android.widget.FrameLayout
@@ -105,19 +105,20 @@ class AddActivity : AppCompatActivity() {
     private var isBackgroundColorChange = false
     private var isTextSizeChange = false
 
-    private var colorText: String = get64Colors()[0]
-    private var backgroundColor: String? = null
-
-    private var isDefaultColorText = true
-
+    val default_color_text = "#000000"
+    val default_background_color = "#00000000"
+    private var colorText: String = default_color_text
+    private var backgroundColor: String = default_background_color
     private var textColorOpacity: Int = 100
     private var backgroundColorOpacity: Int = 100
 
+    private var isDefaultColorText = true
     private var textSize = 18
 
     private var isChangingCharacter = false
 
     var task: Task = Task()
+    var original: Task = Task()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -140,10 +141,12 @@ class AddActivity : AppCompatActivity() {
             task.darkColor = bundle.getString(TASK_DEFAULT_DARK_COLOR)!!
             selectedColor = task.color
             darkSelectedColor = task.darkColor
+            original = task.copy()
             setCColor()
             applyColor()
         }
 
+        setupReadonlyToolbar()
 
         binding.titleEditText.setText(task.title)
         val spanned: Spanned = Html.fromHtml(task.content, Html.FROM_HTML_MODE_LEGACY)
@@ -156,6 +159,14 @@ class AddActivity : AppCompatActivity() {
 
         binding.activityAddBackBtn.setOnClickListener {
             binding.appBarLayout.visibility = View.VISIBLE
+            binding.activityAddSearchEditText.setQuery("", false)
+        }
+
+        binding.activityAddSearchEditText.setOnQueryTextFocusChangeListener { v, hasFocus ->
+            if(!hasFocus) {
+                binding.activityAddSearchEditText.setQuery("", false)
+                binding.appBarLayout.visibility = View.VISIBLE
+            }
         }
 
         binding.activityAddSearchEditText.setOnQueryTextListener(
@@ -165,11 +176,14 @@ class AddActivity : AppCompatActivity() {
                 }
 
                 override fun onQueryTextChange(newText: String?): Boolean {
+                    highlightText(binding.contentEditText, newText ?: "")
                     return true
                 }
 
             }
         )
+
+        
 
         binding.titleEditText.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
@@ -189,9 +203,11 @@ class AddActivity : AppCompatActivity() {
 
         val textWatcher = object : TextWatcher {
             var startIndex: Int? = null
+            var endIndex: Int? = null
             private var previousText: Spannable? = null
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
                 startIndex = start
+                endIndex = start + after
                 previousText = if (s is Spannable) {
                     SpannableStringBuilder(s)
                 } else {
@@ -210,15 +226,14 @@ class AddActivity : AppCompatActivity() {
                     }
 
                     if (isBold || isItalic || isUnderlined || isStrikethrough ||
-                        isColorTextChange || isBackgroundColorChange
+                        isColorTextChange || isBackgroundColorChange || isTextSizeChange
                     ) {
                         val start = startIndex!!
-                        val end = s.length
+                        val end = endIndex!!
                         if (start < end) {
                             removeTextWatcher()
                             formatting(start, end)
                             addTextWatcher()
-                            startIndex = end
                         }
                     }
                 }
@@ -244,6 +259,40 @@ class AddActivity : AppCompatActivity() {
 
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
+    }
+
+
+    private fun highlightText(editText: EditText, textToHighlight: String) {
+        val spannableString = editText.text
+
+
+        val spans = spannableString.getSpans(0, spannableString.length, BackgroundColorSpan::class.java)
+        for (span in spans) {
+            if (spannableString.getSpanStart(span) != -1 && spannableString.getSpanEnd(span) != -1) {
+                spannableString.removeSpan(span)
+            }
+        }
+        if(textToHighlight.isBlank()) {
+            val s = SpannableString(Html.fromHtml(task.content, Html.FROM_HTML_MODE_LEGACY))
+            isChangingCharacter = true
+            binding.contentEditText.setText(s)
+            isChangingCharacter = false
+            return
+        }
+
+        var startIndex = spannableString.indexOf(textToHighlight)
+        while (startIndex >= 0) {
+            val endIndex = startIndex + textToHighlight.length
+
+            spannableString.setSpan(
+                BackgroundColorSpan(Color.YELLOW),
+                startIndex,
+                endIndex,
+                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+            )
+
+            startIndex = spannableString.indexOf(textToHighlight, endIndex)
+        }
     }
 
     private fun formatting(start: Int, end: Int) {
@@ -353,7 +402,11 @@ class AddActivity : AppCompatActivity() {
     }
 
     private fun setActiveBackgroundFormattingButton(imageView: ImageView) {
-        imageView.setBackgroundColor(Color.parseColor("#A52A2A99"))
+        if (imageView == binding.colorFillBtn) {
+
+        } else if (imageView == binding.colorTextBtn) {
+
+        } else imageView.setBackgroundColor(Color.parseColor("#afaeac"))
     }
 
 
@@ -376,6 +429,8 @@ class AddActivity : AppCompatActivity() {
                         darkColor = darkSelectedColor
                     )
                 )
+                original = task.copy()
+                undoStack.clear()
 
                 addViewModel.update(task)
                 Toast.makeText(this, "update successfully", Toast.LENGTH_SHORT).show()
@@ -394,19 +449,25 @@ class AddActivity : AppCompatActivity() {
 
             android.R.id.home -> {
                 onBackPressedDispatcher.onBackPressed()
-
-
             }
 
             R.id.action_undo -> {
-                if(undoStack.isNotEmpty()) {
+                if (undoStack.isNotEmpty()) {
                     val previous = undoStack.pop()
                     isChangingCharacter = true
                     binding.contentEditText.setText(previous)
                     binding.contentEditText.setSelection(previous.length)
                     isChangingCharacter = false
                 }
+            }
 
+            R.id.activity_add_action_undo_all -> {
+                task = original.copy()
+                isChangingCharacter = true
+                binding.contentEditText.setText(SpannableString(Html.fromHtml(task.content, Html.FROM_HTML_MODE_LEGACY)))
+                binding.titleEditText.setText(task.title)
+                undoStack.clear()
+                isChangingCharacter = false
             }
 
             R.id.activity_add_action_share -> {
@@ -433,11 +494,17 @@ class AddActivity : AppCompatActivity() {
             }
 
             R.id.activity_add_action_read_mode -> {
-                //todo
+                binding.readOnlyToolbar.setBackgroundColor(Color.parseColor(task.darkColor))
                 binding.titleEditText.isEnabled = false
                 binding.contentEditText.isEnabled = false
                 binding.contentEditText.setTextColor(ContextCompat.getColor(this, R.color.black))
                 binding.titleEditText.setTextColor(ContextCompat.getColor(this, R.color.black))
+
+                binding.appBarLayout.visibility = View.INVISIBLE
+                binding.readOnlyToolbar.visibility = View.VISIBLE
+
+                val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                imm.hideSoftInputFromWindow(binding.contentEditText.windowToken, 0)
             }
 
             R.id.activity_add_action_categorize -> {
@@ -449,16 +516,14 @@ class AddActivity : AppCompatActivity() {
             }
 
             R.id.activity_add_action_search -> {
+                binding.activityAddSearchField.setBackgroundColor(Color.parseColor(task.darkColor))
                 binding.appBarLayout.visibility = View.INVISIBLE
+                binding.readOnlyToolbar.visibility = View.INVISIBLE
+                binding.activityAddSearchEditText.requestFocus()
             }
 
             R.id.activity_add_action_export -> {
-                val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
-                    addCategory(Intent.CATEGORY_OPENABLE)
-                    type = "text/plain"
-                    putExtra(Intent.EXTRA_TITLE, "${title}.txt")
-                }
-                createDocumentLauncher.launch(intent)
+                exportNote()
             }
 
             R.id.activity_add_action_format_bar -> {
@@ -468,6 +533,35 @@ class AddActivity : AppCompatActivity() {
             }
         }
         return super.onOptionsItemSelected(item)
+    }
+
+    fun setupReadonlyToolbar() {
+        binding.activityAddBackBtnReadonly.setOnClickListener {
+            binding.appBarLayout.visibility = View.VISIBLE
+            binding.titleEditText.isEnabled = true
+            binding.contentEditText.isEnabled = true
+        }
+
+        binding.readonlyEdit.setOnClickListener {
+            binding.appBarLayout.visibility = View.VISIBLE
+            binding.titleEditText.isEnabled = true
+            binding.contentEditText.isEnabled = true
+            binding.contentEditText.requestFocus()
+        }
+
+        binding.readonlyDownload.setOnClickListener {
+            exportNote()
+        }
+
+    }
+
+    private fun exportNote() {
+        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "text/plain"
+            putExtra(Intent.EXTRA_TITLE, "${title}.txt")
+        }
+        createDocumentLauncher.launch(intent)
     }
 
     private fun showColorPickerDialog() {
@@ -579,12 +673,13 @@ class AddActivity : AppCompatActivity() {
 
     private fun showTextColorPicker() {
         val view = layoutInflater.inflate(R.layout.pick_color, null)
-
+        var isReset = false
         val colorGrid = view.findViewById<GridLayout>(R.id.colorGrid).apply {
             rowCount = 8
             columnCount = 8
         }
-        var selectColor: String = get64Colors()[0]
+        var localTextOpacity = 100
+        var localSelectedColor: String = default_color_text
 
         val selectColorTitle = view.findViewById<TextView>(R.id.select_color_title).apply {
             setTextColor(Color.parseColor(colorText))
@@ -592,14 +687,17 @@ class AddActivity : AppCompatActivity() {
 
         view.findViewById<LinearLayout>(R.id.opacity_layout).visibility = View.VISIBLE
 
+        val removeBtn = view.findViewById<Button>(R.id.remove_color_button)
         val seekBar = view.findViewById<SeekBar>(R.id.opacity_seek_bar)
         val opacityPer = view.findViewById<TextView>(R.id.opacity_percent)
+
         seekBar.setOnSeekBarChangeListener(object : OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                textColorOpacity = progress
-                opacityPer.text = "Opacity ($textColorOpacity%):"
-                selectColorTitle.alpha = (progress / 100f)
-                //if(progress == 100) isco
+                if (!isReset) {
+                    localTextOpacity = progress
+                    selectColorTitle.alpha = (progress / 100f)
+                }
+                opacityPer.text = "Opacity ($progress%):"
             }
 
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
@@ -608,13 +706,7 @@ class AddActivity : AppCompatActivity() {
 
         })
 
-        val removeBtn = view.findViewById<Button>(R.id.remove_color_button).apply {
-            setOnClickListener {
-                selectColorTitle.setTextColor(getColor(R.color.black))
-                isDefaultColorText = true
-                selectColor = get64Colors()[0]
-            }
-        }
+
 
         for (element in get64Colors()) {
             val params = GridLayout.LayoutParams().apply {
@@ -667,26 +759,11 @@ class AddActivity : AppCompatActivity() {
             }
 
             b.setOnClickListener {
-                selectColor = element
+                localSelectedColor = element
                 selectColorTitle.setTextColor(Color.parseColor(element))
-                isDefaultColorText = false
+                isReset = false
                 updateSelection()
             }
-
-            view.findViewById<Button>(R.id.remove_color_button).setOnClickListener {
-                //selectedColor = TASK_DEFAULT_COLOR
-                //darkSelectedColor = TASK_DEFAULT_DARK_COLOR
-
-                view.findViewById<TextView>(R.id.select_color_title)
-                    .setBackgroundColor(getColor(R.color.transparent))
-
-                for (i in 0 until colorGrid.childCount) {
-                    val frame = colorGrid.getChildAt(i) as FrameLayout
-                    val plusText = frame.getChildAt(1) as TextView
-                    plusText.visibility = View.INVISIBLE
-                }
-            }
-
 
             colorGrid.addView(frame)
         }
@@ -700,12 +777,19 @@ class AddActivity : AppCompatActivity() {
                 dlg.dismiss()
             }
             .setPositiveButton("OK") { dlg, _ ->
-                colorText = getColorWithOpacity(selectColor, seekBar.progress / 100f)
-                binding.colorTextBtn.setBackgroundColor(Color.parseColor(colorText))
-                isColorTextChange = true
-                applyTextColor(selectColor)
-                //applyColor()
-                //setCColor()
+                if (isReset) {
+                    colorText = default_color_text
+                    binding.colorTextBtn.background = null
+                    isColorTextChange = false
+                } else {
+                    colorText = getColorWithOpacity(localSelectedColor, seekBar.progress / 100f)
+                    Toast.makeText(this@AddActivity, colorText, Toast.LENGTH_SHORT).show()
+                    textColorOpacity = localTextOpacity
+                    binding.colorTextBtn.setBackgroundColor(Color.parseColor(colorText))
+                    isColorTextChange = true
+
+                }
+                applyTextColor(localSelectedColor)
                 updateTask(
                     task.copy(
                         title = binding.titleEditText.text.toString(),
@@ -718,30 +802,55 @@ class AddActivity : AppCompatActivity() {
             }
             .setView(view)
             .create()
+        dialog.setOnShowListener {
+            removeBtn.setOnClickListener {
+
+                for (i in 0 until colorGrid.childCount) {
+                    val frame = colorGrid.getChildAt(i) as FrameLayout
+                    val plusText = frame.getChildAt(1) as TextView
+                    plusText.visibility = View.INVISIBLE
+                }
+
+                localSelectedColor = default_color_text
+                selectColorTitle.setTextColor(getColor(R.color.black))
+                localTextOpacity = 100
+                seekBar.progress = localTextOpacity
+                isReset = true
+                Toast.makeText(this@AddActivity, "active", Toast.LENGTH_SHORT).show()
+            }
+        }
+
         dialog.show()
 
     }
 
     private fun showBackgroundColorPickerDialog() {
         val view = layoutInflater.inflate(R.layout.pick_color, null)
-        val removeBtn = view.findViewById<Button>(R.id.remove_color_button)
+        var isReset = false
         val colorGrid = view.findViewById<GridLayout>(R.id.colorGrid).apply {
             rowCount = 8
             columnCount = 8
         }
-        var selectColor: String = "#ffffff"
+        var localBackgroundOpacity = 100
+        var localSelectedColor: String = backgroundColor
 
-        val selectColorTitle = view.findViewById<TextView>(R.id.select_color_title)
+        val selectColorTitle = view.findViewById<TextView>(R.id.select_color_title).apply {
+            setBackgroundColor(Color.parseColor(backgroundColor))
+        }
 
         view.findViewById<LinearLayout>(R.id.opacity_layout).visibility = View.VISIBLE
 
+        val removeBtn = view.findViewById<Button>(R.id.remove_color_button)
         val seekBar = view.findViewById<SeekBar>(R.id.opacity_seek_bar)
         val opacityPer = view.findViewById<TextView>(R.id.opacity_percent)
+
         seekBar.setOnSeekBarChangeListener(object : OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                backgroundColorOpacity = progress
-                opacityPer.text = "Opacity (${backgroundColorOpacity}%):"
-                selectColorTitle.alpha = (progress / 100f)
+                if (!isReset) {
+                    localBackgroundOpacity = progress
+                    selectColorTitle.alpha = (progress / 100f)
+                }
+                opacityPer.text = "Opacity ($progress%):"
             }
 
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
@@ -750,10 +859,6 @@ class AddActivity : AppCompatActivity() {
 
         })
 
-        removeBtn.setOnClickListener {
-
-        }
-
 
 
         for (element in get64Colors()) {
@@ -761,6 +866,7 @@ class AddActivity : AppCompatActivity() {
                 width = 0
                 height = 48
                 columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f)
+                //setMargins(2, 2, 2, 2)
             }
 
             val frame = FrameLayout(this).apply {
@@ -806,25 +912,11 @@ class AddActivity : AppCompatActivity() {
             }
 
             b.setOnClickListener {
-                selectColor = element
+                localSelectedColor = element
                 selectColorTitle.setBackgroundColor(Color.parseColor(element))
+                isReset = false
                 updateSelection()
             }
-
-            view.findViewById<Button>(R.id.remove_color_button).setOnClickListener {
-                //selectedColor = TASK_DEFAULT_COLOR
-                //darkSelectedColor = TASK_DEFAULT_DARK_COLOR
-
-                view.findViewById<TextView>(R.id.select_color_title)
-                    .setBackgroundColor(getColor(R.color.transparent))
-
-                for (i in 0 until colorGrid.childCount) {
-                    val frame = colorGrid.getChildAt(i) as FrameLayout
-                    val plusText = frame.getChildAt(1) as TextView
-                    plusText.visibility = View.INVISIBLE
-                }
-            }
-
 
             colorGrid.addView(frame)
         }
@@ -838,23 +930,50 @@ class AddActivity : AppCompatActivity() {
                 dlg.dismiss()
             }
             .setPositiveButton("OK") { dlg, _ ->
-                isBackgroundColorChange = true
-                backgroundColor = getColorWithOpacity(selectColor, backgroundColorOpacity / 100f)
-                binding.colorFillBtn.setBackgroundColor(Color.parseColor(backgroundColor))
-                applyBackgroundColor(selectColor)
+                if (isReset) {
+                    backgroundColor = default_background_color
+                    binding.colorFillBtn.background = null
+                    isBackgroundColorChange = false
+                } else {
+                    backgroundColor =
+                        getColorWithOpacity(localSelectedColor, seekBar.progress / 100f)
+                    Toast.makeText(this@AddActivity, colorText, Toast.LENGTH_SHORT).show()
+                    backgroundColorOpacity = localBackgroundOpacity
+                    binding.colorFillBtn.setBackgroundColor(Color.parseColor(backgroundColor))
+                    isBackgroundColorChange = true
+
+                }
+                applyBackgroundColor(localSelectedColor)
                 updateTask(
                     task.copy(
                         title = binding.titleEditText.text.toString(),
                         content = binding.contentEditText.text.toString(),
-                        color = selectedColor,
-                        darkColor = darkSelectedColor
                     )
                 )
                 dlg.dismiss()
             }
             .setView(view)
             .create()
+        dialog.setOnShowListener {
+            removeBtn.setOnClickListener {
+
+                for (i in 0 until colorGrid.childCount) {
+                    val frame = colorGrid.getChildAt(i) as FrameLayout
+                    val plusText = frame.getChildAt(1) as TextView
+                    plusText.visibility = View.INVISIBLE
+                }
+
+                localSelectedColor = default_background_color
+                selectColorTitle.setBackgroundColor(getColor(R.color.transparent))
+                localBackgroundOpacity = 100
+                seekBar.progress = localBackgroundOpacity
+                isReset = true
+                Toast.makeText(this@AddActivity, "active", Toast.LENGTH_SHORT).show()
+            }
+        }
+
         dialog.show()
+
 
     }
 
@@ -866,12 +985,16 @@ class AddActivity : AppCompatActivity() {
 
         var localTextSize = textSize
 
+        textTitle.textSize = localTextSize.toFloat()
+        textTitle.setText("Text size $localTextSize")
+
         setDefaultBtn.setOnClickListener {
             textSizeBar.progress = 18
             textSize = 18
             localTextSize = 18
         }
 
+        textSizeBar.progress = localTextSize
         textSizeBar.setOnSeekBarChangeListener(
             object : OnSeekBarChangeListener {
                 override fun onProgressChanged(
@@ -879,9 +1002,9 @@ class AddActivity : AppCompatActivity() {
                     progress: Int,
                     fromUser: Boolean
                 ) {
-                    textTitle.setText("Text size ${progress}")
-                    textTitle.textSize = progress.toFloat()
                     localTextSize = progress
+                    textTitle.setText("Text size ${localTextSize}")
+                    textTitle.textSize = localTextSize.toFloat()
                 }
 
                 override fun onStartTrackingTouch(seekBar: SeekBar?) {
@@ -915,8 +1038,6 @@ class AddActivity : AppCompatActivity() {
                     task.copy(
                         title = binding.titleEditText.text.toString(),
                         content = binding.contentEditText.text.toString(),
-                        color = selectedColor,
-                        darkColor = darkSelectedColor
                     )
                 )
                 dlg.dismiss()
@@ -1015,15 +1136,27 @@ class AddActivity : AppCompatActivity() {
                 }
 
                 is ForegroundColorSpan -> {
-
+                    styles.add(binding.colorTextBtn)
+                    val spanColor = span.foregroundColor
+                    val hexColor = String.format("#%08X", spanColor)
+                    binding.colorTextBtn.setBackgroundColor(Color.parseColor(hexColor))
+                    colorText = hexColor
+                    isColorTextChange = true
                 }
 
                 is BackgroundColorSpan -> {
-
+                    styles.add(binding.colorFillBtn)
+                    val spanColor = span.backgroundColor
+                    val hexColor = String.format("#%08X", spanColor)
+                    binding.colorFillBtn.setBackgroundColor(Color.parseColor(hexColor))
+                    backgroundColor = hexColor
+                    isBackgroundColorChange = true
                 }
 
                 is AbsoluteSizeSpan -> {
-
+                    styles.add(binding.formatSizeBtn)
+                    textSize = span.size
+                    isTextSizeChange = true
                 }
 
 
@@ -1038,32 +1171,36 @@ class AddActivity : AppCompatActivity() {
             binding.italicBtn.background = null
             isItalic = false
         }
-        if(binding.boldBtn !in styles) {
+        if (binding.boldBtn !in styles) {
             binding.boldBtn.background = null
             isBold = false
         }
-        if(binding.underlinedBtn !in styles) {
+        if (binding.underlinedBtn !in styles) {
             isUnderlined = false
             binding.underlinedBtn.background = null
         }
-        if(binding.strikethroughBtn !in styles) {
+        if (binding.strikethroughBtn !in styles) {
             isStrikethrough = false
             binding.strikethroughBtn.background = null
         }
 
-//        if(binding.formatSizeBtn !in styles) binding.boldBtn.background = null
-//        if(binding.boldBtn !in styles) binding.boldBtn.background = null
-//        if(binding.boldBtn !in styles) binding.boldBtn.background = null
+        if (binding.colorTextBtn !in styles) {
+            binding.colorTextBtn.background = null
+            isColorTextChange = false
+        }
+
+        if (binding.colorFillBtn !in styles) {
+            binding.colorFillBtn.background = null
+            isBackgroundColorChange = false
+        }
+
+        if(binding.formatSizeBtn !in styles) {
+            binding.formatSizeBtn.background = null
+            textSize = 18
+            isTextSizeChange = false
+        }
+
     }
-
-    fun resetFormatbarDefault() {
-        binding.boldBtn.foreground = null
-        binding.boldBtn.alpha = 1f
-
-        binding.italicBtn.foreground = null
-        binding.italicBtn.alpha = 1f
-    }
-
 
     private fun resetCurrentColor() {
         selectedColor = cSelectedColor
@@ -1156,6 +1293,7 @@ class AddActivity : AppCompatActivity() {
             end,
             Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
         )
+
     }
 
     private fun applyBackgroundColor(hex: String) {

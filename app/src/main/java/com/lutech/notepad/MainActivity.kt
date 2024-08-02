@@ -228,11 +228,11 @@ class MainActivity : AppCompatActivity() {
                 binding.appBarMain.searchField.requestFocus()
             }
             R.id.activity_main_action_import -> {
-
                 val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
                     addCategory(Intent.CATEGORY_OPENABLE)
                     type = "text/plain"
                 }
+
                 openDocumentLauncher.launch(intent)
 
             }

@@ -13,10 +13,10 @@
         android:title="@string/undo"
         app:showAsAction="always"/>
 
-    <item
-        android:id="@+id/activity_add_action_redo"
-        android:title="@string/redo"
-        app:showAsAction="never" />
+<!--    <item-->
+<!--        android:id="@+id/activity_add_action_redo"-->
+<!--        android:title="@string/redo"-->
+<!--        app:showAsAction="never" />-->
 
     <item
         android:id="@+id/activity_add_action_undo_all"

@@ -177,6 +177,8 @@ class TaskAdapter(
         notifyDataSetChanged()
     }
 
+
+
     private fun clickItem(holder: ViewHolder): Unit {
 
         val s = tasks[holder.absoluteAdapterPosition]

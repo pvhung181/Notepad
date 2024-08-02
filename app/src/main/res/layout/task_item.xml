@@ -28,7 +28,7 @@
         android:layout_height="wrap_content"
         android:text="@string/trash"
         android:layout_marginStart="@dimen/_12sdp"
-        android:textSize="@dimen/_20sdp"
+        android:textSize="@dimen/_16sdp"
         android:textStyle="bold"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
