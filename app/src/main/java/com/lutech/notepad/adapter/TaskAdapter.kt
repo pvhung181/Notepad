@@ -1,10 +1,14 @@
 package com.lutech.notepad.adapter
 
 import android.app.Activity
+import android.app.AlertDialog
 import android.content.Intent
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
+import android.text.Html
+import android.text.Spannable
+import android.text.SpannableString
 import android.view.ActionMode
 import android.view.LayoutInflater
 import android.view.Menu
@@ -50,14 +54,22 @@ class TaskAdapter(
         val overlay: View = itemView.findViewById(id.view_overlay)
 
         fun setData(task: Task) {
-            title.text = if(task.title == "") "Untitled" else task.title
+            if(task.title.isBlank()) {
+                if(task.content.isNotEmpty()) {
+                    title.text = SpannableString(Html.fromHtml(task.content, Html.FROM_HTML_MODE_LEGACY)).toString()
+                }
+                else {
+                    title.text = "Untitled"
+                }
+            }
+            else {
+                title.text = task.title
+            }
             lastEdit.text = task.lastEdit
 
             val background = item.background as GradientDrawable
             background.setColor(Color.parseColor(task.color))
             item.background = background
-
-            //background.setBackgroundColor(Color.parseColor(task.color))
         }
 
     }
@@ -107,13 +119,23 @@ class TaskAdapter(
                     override fun onActionItemClicked(mode: ActionMode?, item: MenuItem?): Boolean {
                         when (item!!.itemId) {
                             id.menu_delete -> {
-                                for (s in selectList) {
-                                    tasks.remove(s)
-                                    //update is_deleted = true not delete
-                                    mainViewModel?.moveToTrash(s)
-                                }
+                                AlertDialog.Builder(activity)
+                                    .setMessage("Delete the selected notes?")
+                                    .setNegativeButton("Cancel") { dlg, _ -> dlg.dismiss() }
+                                    .setPositiveButton("OK") {dlg, _ ->
+                                        for (s in selectList) {
+                                            tasks.remove(s)
+                                            //update is_deleted = true not delete
+                                            mainViewModel?.moveToTrash(s)
 
-                                mode?.finish()
+                                        }
+                                        mode?.finish()
+                                        dlg.dismiss()
+                                    }
+                                    .create().show()
+
+
+
                             }
 
                             id.menu_select_all -> {

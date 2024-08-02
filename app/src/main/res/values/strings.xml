@@ -55,4 +55,15 @@
     <string name="undo">Undo</string>
     <string name="remove_the_color">REMOVE THE COLOR</string>
     <string name="select_color">Select color</string>
+    <string name="instruction">Tap (or click ) the note above to open it \n  \n
+        User the + (plus) button below to create a new note</string>
+    <string name="task_title_instruction">Hi, how are you? (tap to open)</string>
+    <string name="task_content_instruction">Thank you for downloading Notepad Free. This is a welcome message.\n
+        You can delete this message by clicking Delete button in the top right corner.\n
+        You can revert any unwanted changes during note edition with the "Undo" and "Redo" buttons. Try to edit this text, and click the buttons in the top right corner.\n
+        Please check the main menu for additional functions, like Help screen, backup functions, or settings. It can be opened with the button in the top left corner of the main screen.\n
+        Have a nice day.\n
+        ☺️
+    </string>
+
 </resources>

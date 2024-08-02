@@ -17,13 +17,17 @@ import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.lutech.notepad.R
 import com.lutech.notepad.adapter.TaskAdapter
+import com.lutech.notepad.constants.APP_SHARED_PREFERENCES
 import com.lutech.notepad.constants.CATEGORY_ALL
 import com.lutech.notepad.constants.CATEGORY_ID
 import com.lutech.notepad.constants.CATEGORY_NAME
+import com.lutech.notepad.constants.IS_FIRST_TIME
 import com.lutech.notepad.databinding.FragmentHomeBinding
 import com.lutech.notepad.model.Task
+import com.lutech.notepad.utils.ApplicationPreferenceManager
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -35,30 +39,50 @@ class HomeFragment : Fragment(), MenuProvider {
     private lateinit var adapter: TaskAdapter
     private lateinit var recycler: RecyclerView
     private lateinit var allTasks: MutableList<Task>
+    private lateinit var applicationPreferenceManager: ApplicationPreferenceManager
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-
-
-        homeViewModel =
-            ViewModelProvider(this)[HomeViewModel::class.java]
-
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
+        init()
         setupRecycler(
             arguments?.getString(CATEGORY_NAME),
             arguments?.getInt(CATEGORY_ID)
         )
 
-
         return root
     }
+    private fun init() {
+        homeViewModel =
+            ViewModelProvider(this)[HomeViewModel::class.java]
+        applicationPreferenceManager = ApplicationPreferenceManager(APP_SHARED_PREFERENCES, requireContext())
+    }
 
-    fun setupRecycler(categoryName: String?, id: Int?) {
+    private fun setupIfIsFirstTime() {
+        if(applicationPreferenceManager.isFirstTime()) {
+            binding.textviewInstruction.visibility = View.VISIBLE
+            binding.iconBottomRight.visibility = View.VISIBLE
+
+            homeViewModel.insertTask(
+                Task(
+                    title = getString(R.string.task_title_instruction),
+                    content = getString(R.string.task_content_instruction)
+                )
+            )
+        }
+        else {
+            binding.textviewInstruction.visibility = View.GONE
+            binding.iconBottomRight.visibility = View.GONE
+
+        }
+    }
+
+    private fun setupRecycler(categoryName: String?, id: Int?) {
         recycler = binding.recycler
         adapter = TaskAdapter(activity = requireActivity())
         recycler.adapter = adapter
@@ -72,7 +96,7 @@ class HomeFragment : Fragment(), MenuProvider {
             if(id != null) {
                 homeViewModel.getCategoryWithNotes(id).observe(viewLifecycleOwner){
                     if(it.isNotEmpty())  {
-                        allTasks = it[0].notes.toMutableList()
+                        allTasks = it[0].notes.filter { task -> !task.isDeleted }.toMutableList()
                         adapter.setData(allTasks)
                     }
                 }
@@ -92,17 +116,15 @@ class HomeFragment : Fragment(), MenuProvider {
         else {
             (activity as AppCompatActivity).supportActionBar?.subtitle = categoryName
         }
+
         super.onViewCreated(view, savedInstanceState)
     }
 
     override fun onResume() {
         val appBarLayout: View? = activity?.findViewById(R.id.app_bar_main)
         val searchView = appBarLayout?.findViewById<SearchView>(R.id.search_field)
-//        val sort = appBarLayout?.findViewById<SearchView>(R.id.action_sort)
-//
-//        sort?.setOnClickListener {
-//            showSortDialog()
-//        }
+
+        setupIfIsFirstTime()
 
         searchView?.setOnQueryTextListener(
             object : SearchView.OnQueryTextListener {
@@ -129,6 +151,25 @@ class HomeFragment : Fragment(), MenuProvider {
             }
         )
         super.onResume()
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
+
+    override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
+        menu.clear()
+        menuInflater.inflate(R.menu.main, menu)
+
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
+        when(menuItem.itemId) {
+            R.id.action_sort -> showSortDialog()
+        }
+        return false
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -189,22 +230,5 @@ class HomeFragment : Fragment(), MenuProvider {
 
 
 
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
-    }
 
-    override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
-        menu.clear()
-        menuInflater.inflate(R.menu.main, menu)
-
-    }
-
-    @RequiresApi(Build.VERSION_CODES.O)
-    override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
-        when(menuItem.itemId) {
-            R.id.action_sort -> showSortDialog()
-        }
-        return false
-    }
 }

@@ -2,6 +2,7 @@ package com.lutech.notepad
 
 import android.app.Activity
 import android.content.Intent
+import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Bundle
 import android.provider.OpenableColumns
@@ -22,9 +23,11 @@ import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupWithNavController
 import com.google.android.material.navigation.NavigationView
+import com.lutech.notepad.constants.APP_SHARED_PREFERENCES
 import com.lutech.notepad.constants.CATEGORY_ALL
 import com.lutech.notepad.constants.CATEGORY_ID
 import com.lutech.notepad.constants.CATEGORY_NAME
+import com.lutech.notepad.constants.IS_FIRST_TIME
 import com.lutech.notepad.constants.TASK
 import com.lutech.notepad.constants.TASK_CONTENT
 import com.lutech.notepad.constants.TASK_CREATION_DATE
@@ -41,6 +44,7 @@ import com.lutech.notepad.ui.backup.BackupActivity
 import com.lutech.notepad.ui.help.HelpActivity
 import com.lutech.notepad.ui.privacy_policy.PrivacyPolicyActivity
 import com.lutech.notepad.ui.setting.SettingActivity
+import com.lutech.notepad.utils.ApplicationPreferenceManager
 import java.io.BufferedReader
 import java.io.InputStreamReader
 
@@ -54,45 +58,21 @@ class MainActivity : AppCompatActivity() {
     private lateinit var navController: NavController
     private lateinit var toolbar: Toolbar
     private lateinit var taskViewModel: TaskViewModel
+    private lateinit var applicationPreferenceManager: ApplicationPreferenceManager
 
-    private val openDocumentLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            result.data?.data?.let { uri ->
-                val content = readFromFile(uri)
-                val title =  getFileName(uri)
-                taskViewModel.insertTask(Task(
-                    content = content,
-                    title = title
-                ))
-            }
-        }
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
         init()
         setListeners()
         setSupportActionBar(toolbar)
         setDrawerItemClick()
         setupDrawer()
         setSearchToolbarListener()
-        //registerForContextMenu(binding.appBarMain.moreBtn)
+
         navView.setupWithNavController(navController)
-    }
-
-    private fun setSearchToolbarListener() {
-        binding.appBarMain.backBtn.setOnClickListener {
-            binding.appBarMain.toolbar.visibility = View.VISIBLE
-            binding.appBarMain.searchToolbar.visibility = View.GONE
-        }
-
-//        binding.appBarMain.moreBtn.setOnClickListener {
-//            Toast.makeText(this, "active", Toast.LENGTH_SHORT).show()
-//        }
-
     }
 
     private fun init() {
@@ -101,7 +81,18 @@ class MainActivity : AppCompatActivity() {
         navController = findNavController(R.id.nav_host_fragment_content_main)
         toolbar = binding.appBarMain.toolbar
         taskViewModel = ViewModelProvider(this)[TaskViewModel::class.java]
+        applicationPreferenceManager = ApplicationPreferenceManager(APP_SHARED_PREFERENCES, applicationContext)
     }
+
+
+    private fun setSearchToolbarListener() {
+        binding.appBarMain.backBtn.setOnClickListener {
+            binding.appBarMain.toolbar.visibility = View.VISIBLE
+            binding.appBarMain.searchToolbar.visibility = View.GONE
+        }
+    }
+
+
 
     private fun setupDrawer() {
         val toggle = ActionBarDrawerToggle(
@@ -122,6 +113,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun setListeners() {
         binding.appBarMain.fab.setOnClickListener {
+            applicationPreferenceManager.putBoolean(IS_FIRST_TIME, false)
+
             taskViewModel.insertTask(Task()).invokeOnCompletion {
                 taskViewModel.getLastTask().invokeOnCompletion {
 
@@ -245,6 +238,20 @@ class MainActivity : AppCompatActivity() {
         return navController.navigateUp(appBarConfiguration) || super.onSupportNavigateUp()
     }
 
+    // region I/O
+    private val openDocumentLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            result.data?.data?.let { uri ->
+                val content = readFromFile(uri)
+                val title =  getFileName(uri)
+                taskViewModel.insertTask(Task(
+                    content = content,
+                    title = title
+                ))
+            }
+        }
+    }
+
     private fun readFromFile(uri: Uri): String {
         val stringBuilder = StringBuilder()
         contentResolver.openInputStream(uri)?.use { inputStream ->
@@ -270,16 +277,6 @@ class MainActivity : AppCompatActivity() {
         return fileName
     }
 
-//    override fun onCreateContextMenu(
-//        menu: ContextMenu?,
-//        v: View?,
-//        menuInfo: ContextMenu.ContextMenuInfo?
-//    ) {
-//       menuInflater.inflate(R.menu.activity_main_search_menu, menu)
-//        super.onCreateContextMenu(menu, v, menuInfo)
-//    }
-//
-//    override fun onContextItemSelected(item: MenuItem): Boolean {
-//        return super.onContextItemSelected(item)
-//    }
+    //endregion
+
 }

@@ -21,12 +21,12 @@ import com.lutech.notepad.ui.home.HomeViewModel
 import java.util.Collections
 
 class CategoryFragment : Fragment(), MenuProvider {
-
     private var _binding: FragmentCategoryBinding? = null
-
     private val binding get() = _binding!!
 
     private lateinit var categoryViewModel: CategoryViewModel
+
+    private lateinit var recycler: RecyclerView
     private lateinit var adapter: CategoryAdapter
     private var draggedItemIndex: Int? = null
 
@@ -35,14 +35,23 @@ class CategoryFragment : Fragment(), MenuProvider {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-
-        categoryViewModel =
-            ViewModelProvider(this)[CategoryViewModel::class.java]
-
         _binding = FragmentCategoryBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
-        val recycler = binding.recyclerCategory
+        init()
+        setupRecyclerView()
+        setListeners()
+
+        return root
+    }
+
+    private fun init() {
+        categoryViewModel =
+            ViewModelProvider(this)[CategoryViewModel::class.java]
+    }
+
+    private fun setupRecyclerView() {
+        recycler = binding.recyclerCategory
         adapter = CategoryAdapter(activity = requireActivity())
         recycler.adapter = adapter
         categoryViewModel.categories.observe(viewLifecycleOwner) {
@@ -50,10 +59,9 @@ class CategoryFragment : Fragment(), MenuProvider {
             categoryViewModel.categoryCheck = it
             binding.addBtn.isEnabled = true
         }
+    }
 
-        setListeners()
-
-
+    private fun setupDragItem() {
         val itemTouchHelper: ItemTouchHelper = ItemTouchHelper(
             object : ItemTouchHelper.Callback(){
                 override fun getMovementFlags(
@@ -88,8 +96,6 @@ class CategoryFragment : Fragment(), MenuProvider {
         )
 
         itemTouchHelper.attachToRecyclerView(recycler)
-
-        return root
     }
 
     private fun setListeners() {
@@ -98,8 +104,6 @@ class CategoryFragment : Fragment(), MenuProvider {
             //binding.categoryEditText.text.clear()
             binding.categoryEditText.requestFocus()
         }
-
-
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

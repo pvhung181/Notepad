@@ -25,14 +25,14 @@ class HomeViewModel(
 
     val tasks: LiveData<MutableList<Task>> = _tasks
 
-
-    //var categoryWithNotes: ? =
-
     fun getCategoryWithNotes(id: Int): LiveData<List<CategoryWithNotes>> {
         return categoryNoteRepository.getCategoryWithNote(id)
     }
 
-    fun getNoteWithCategories(id: Int): LiveData<List<NoteWithCategories>> {
-        return categoryNoteRepository.getNoteWithCategory(id)
+    fun insertTask(task: Task) {
+        viewModelScope.launch {
+            repository.saveTask(task)
+        }
     }
+
 }

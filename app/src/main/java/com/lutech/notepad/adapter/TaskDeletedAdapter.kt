@@ -29,7 +29,7 @@ class TaskDeletedAdapter(
     var isEnable = false
     var isSelectAll = false
     var selectList = mutableListOf<Task>()
-
+    var isActive = false
 
     class ViewHolder(ItemView: View) : RecyclerView.ViewHolder(ItemView) {
         private val title: TextView = itemView.findViewById(id.task_title)
@@ -79,22 +79,32 @@ class TaskDeletedAdapter(
 
                     override fun onPrepareActionMode(mode: ActionMode?, menu: Menu?): Boolean {
                         isEnable = true
-                        clickItem(holder)
+                        if(!isActive){
+                            clickItem(holder)
+                            isActive = !isActive
+                        }
                         mainViewModel?.getText()?.observe(
                             activity as LifecycleOwner
                         ) { value -> mode?.title = String.format("%s Selected", value) }
-                        return true
+                        return false
                     }
 
                     override fun onActionItemClicked(mode: ActionMode?, item: MenuItem?): Boolean {
                         when (item!!.itemId) {
                             id.trash_restore -> {
-                                for (s in selectList) {
-                                    tasks.remove(s)
-                                    mainViewModel?.restoreTask(s)
-                                }
+                                android.app.AlertDialog.Builder(activity)
+                                    .setMessage("Restore the selected notes?")
+                                    .setNegativeButton("Cancel") { dlg, _ -> dlg.dismiss() }
+                                    .setPositiveButton("OK") {dlg, _ ->
+                                        for (s in selectList) {
+                                            tasks.remove(s)
+                                            mainViewModel?.restoreTask(s)
+                                        }
 
-                                mode?.finish()
+                                        mode?.finish()
+                                        dlg.dismiss()
+                                    }
+                                    .create().show()
                             }
 
                             id.trash_select_all -> {
@@ -109,19 +119,31 @@ class TaskDeletedAdapter(
                                 mainViewModel?.setText(selectList.size.toString())
                                 notifyDataSetChanged()
                             }
+
+                            id.trash_delete -> {
+                                android.app.AlertDialog.Builder(activity)
+                                    .setMessage("Are you sure that you want to delete the selected notes ? The notes will be deleted permanently")
+                                    .setNegativeButton("Cancel") { dlg, _ -> dlg.dismiss() }
+                                    .setPositiveButton("OK") {dlg, _ ->
+                                        for (s in selectList) {
+                                            tasks.remove(s)
+                                            mainViewModel?.deleteTask(s)
+                                        }
+
+                                        mode?.finish()
+                                        dlg.dismiss()
+                                    }
+                                    .create().show()
+                            }
                         }
                         return true
                     }
 
                     override fun onDestroyActionMode(mode: ActionMode?) {
-
                         isEnable = false
                         isSelectAll = false
-
-
-
+                        isActive = false
                         selectList.clear()
-
                         notifyDataSetChanged()
                     }
                 }

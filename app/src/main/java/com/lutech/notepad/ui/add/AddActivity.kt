@@ -48,6 +48,8 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.RecyclerView
 import com.lutech.notepad.R
 import com.lutech.notepad.adapter.CategoryDialogAdapter
+import com.lutech.notepad.constants.DEFAULT_COLOR_BACKGROUND
+import com.lutech.notepad.constants.DEFAULT_COLOR_TEXT
 import com.lutech.notepad.constants.TASK
 import com.lutech.notepad.constants.TASK_CONTENT
 import com.lutech.notepad.constants.TASK_CREATION_DATE
@@ -81,21 +83,25 @@ import kotlin.math.min
 
 class AddActivity : AppCompatActivity() {
     lateinit var binding: ActivityAddBinding
-    private var isUpdate: Boolean = false
+
     lateinit var toolbar: Toolbar
+
     private lateinit var addViewModel: AddViewModel
-
-    private var selectedColor: String = TASK_DEFAULT_COLOR
-    private var darkSelectedColor: String = TASK_DEFAULT_DARK_COLOR
-
-    private var cSelectedColor: String = TASK_DEFAULT_COLOR
-    private var cDarkSelectedColor: String = TASK_DEFAULT_DARK_COLOR
+    private lateinit var taskViewModel: TaskViewModel
 
     private val undoStack: Stack<Spannable> = Stack()
 
-    private var spannable: Spannable? = null
+    private var selectedColor: String = TASK_DEFAULT_COLOR
+    private var darkSelectedColor: String = TASK_DEFAULT_DARK_COLOR
+    private var cSelectedColor: String = TASK_DEFAULT_COLOR
+    private var cDarkSelectedColor: String = TASK_DEFAULT_DARK_COLOR
+    private var colorText: String = DEFAULT_COLOR_TEXT
+    private var backgroundColor: String = DEFAULT_COLOR_BACKGROUND
+    private var textColorOpacity: Int = 100
+    private var backgroundColorOpacity: Int = 100
+    private var textSize = 18
 
-    private lateinit var taskViewModel: TaskViewModel
+    private var spannable: Spannable? = null
 
     private var isBold = false
     private var isItalic = false
@@ -105,31 +111,32 @@ class AddActivity : AppCompatActivity() {
     private var isBackgroundColorChange = false
     private var isTextSizeChange = false
 
-    val default_color_text = "#000000"
-    val default_background_color = "#00000000"
-    private var colorText: String = default_color_text
-    private var backgroundColor: String = default_background_color
-    private var textColorOpacity: Int = 100
-    private var backgroundColorOpacity: Int = 100
-
-    private var isDefaultColorText = true
-    private var textSize = 18
-
     private var isChangingCharacter = false
+    private var isUpdate: Boolean = false
 
     var task: Task = Task()
     var original: Task = Task()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        addViewModel = ViewModelProvider(this).get(AddViewModel::class.java)
         binding = ActivityAddBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        init()
+        initValue()
         setupFormatBarListeners()
+        setupReadonlyToolbar()
+        setListeners()
+    }
+
+    //region init
+    private fun init() {
+        addViewModel = ViewModelProvider(this)[AddViewModel::class.java]
         isUpdate = intent.getBundleExtra(TASK) != null
         toolbar = binding.toolbar
         taskViewModel = ViewModelProvider(this)[TaskViewModel::class.java]
+    }
 
+    private fun initValue() {
         val bundle = intent.getBundleExtra(TASK)
         if (bundle != null) {
             task.taskId = bundle.getInt(TASK_ID)
@@ -146,423 +153,20 @@ class AddActivity : AppCompatActivity() {
             applyColor()
         }
 
-        setupReadonlyToolbar()
-
         binding.titleEditText.setText(task.title)
         val spanned: Spanned = Html.fromHtml(task.content, Html.FROM_HTML_MODE_LEGACY)
         spannable = SpannableString(spanned)
         binding.contentEditText.setText(spannable)
 
-        binding.cancelBtn.setOnClickListener {
-            binding.formatBar.visibility = View.GONE
-        }
-
-        binding.activityAddBackBtn.setOnClickListener {
-            binding.appBarLayout.visibility = View.VISIBLE
-            binding.activityAddSearchEditText.setQuery("", false)
-        }
-
-        binding.activityAddSearchEditText.setOnQueryTextFocusChangeListener { v, hasFocus ->
-            if(!hasFocus) {
-                binding.activityAddSearchEditText.setQuery("", false)
-                binding.appBarLayout.visibility = View.VISIBLE
-            }
-        }
-
-        binding.activityAddSearchEditText.setOnQueryTextListener(
-            object : SearchView.OnQueryTextListener {
-                override fun onQueryTextSubmit(query: String?): Boolean {
-                    return true
-                }
-
-                override fun onQueryTextChange(newText: String?): Boolean {
-                    highlightText(binding.contentEditText, newText ?: "")
-                    return true
-                }
-
-            }
-        )
-
-        
-
-        binding.titleEditText.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
-
-            }
-
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-
-
-                updateTask(task.copy(title = s.toString()))
-
-            }
-
-            override fun afterTextChanged(s: Editable?) {
-            }
-        })
-
-        val textWatcher = object : TextWatcher {
-            var startIndex: Int? = null
-            var endIndex: Int? = null
-            private var previousText: Spannable? = null
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
-                startIndex = start
-                endIndex = start + after
-                previousText = if (s is Spannable) {
-                    SpannableStringBuilder(s)
-                } else {
-                    SpannableStringBuilder.valueOf(s)
-                }
-            }
-
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                updateTask(task.copy(content = s.toString()))
-            }
-
-            override fun afterTextChanged(s: Editable?) {
-                if (s != null) {
-                    if (s.toString() != previousText.toString() && !isChangingCharacter) {
-                        undoStack.push(previousText)
-                    }
-
-                    if (isBold || isItalic || isUnderlined || isStrikethrough ||
-                        isColorTextChange || isBackgroundColorChange || isTextSizeChange
-                    ) {
-                        val start = startIndex!!
-                        val end = endIndex!!
-                        if (start < end) {
-                            removeTextWatcher()
-                            formatting(start, end)
-                            addTextWatcher()
-                        }
-                    }
-                }
-            }
-
-            private fun removeTextWatcher() {
-                binding.contentEditText.removeTextChangedListener(this)
-            }
-
-            private fun addTextWatcher() {
-                binding.contentEditText.addTextChangedListener(this)
-            }
-
-        }
-
-        binding.contentEditText.addTextChangedListener(textWatcher)
-
-        binding.contentEditText.setOnClickListener {
-            checkTextStyle()
-        }
 
         binding.contentEditText.requestFocus()
 
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
     }
-
-
-    private fun highlightText(editText: EditText, textToHighlight: String) {
-        val spannableString = editText.text
-
-
-        val spans = spannableString.getSpans(0, spannableString.length, BackgroundColorSpan::class.java)
-        for (span in spans) {
-            if (spannableString.getSpanStart(span) != -1 && spannableString.getSpanEnd(span) != -1) {
-                spannableString.removeSpan(span)
-            }
-        }
-        if(textToHighlight.isBlank()) {
-            val s = SpannableString(Html.fromHtml(task.content, Html.FROM_HTML_MODE_LEGACY))
-            isChangingCharacter = true
-            binding.contentEditText.setText(s)
-            isChangingCharacter = false
-            return
-        }
-
-        var startIndex = spannableString.indexOf(textToHighlight)
-        while (startIndex >= 0) {
-            val endIndex = startIndex + textToHighlight.length
-
-            spannableString.setSpan(
-                BackgroundColorSpan(Color.YELLOW),
-                startIndex,
-                endIndex,
-                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-            )
-
-            startIndex = spannableString.indexOf(textToHighlight, endIndex)
-        }
-    }
-
-    private fun formatting(start: Int, end: Int) {
-        if (isBold) {
-            applyBoldNoSelection(
-                binding.contentEditText,
-                start,
-                end
-            )
-        }
-
-        if (isItalic) {
-            applyItalicNoSelection(
-                binding.contentEditText,
-                start,
-                end
-            )
-        }
-
-        if (isUnderlined) {
-            applyUnderlineNoSelection(
-                binding.contentEditText,
-                start,
-                end
-            )
-        }
-
-        if (isStrikethrough) {
-            applyStrikethroughNoSelection(
-                binding.contentEditText,
-                start,
-                end
-            )
-        }
-
-        if (isColorTextChange) {
-            applyForegroundColorNoSelection(
-                binding.contentEditText,
-                start,
-                end,
-                Color.parseColor(colorText)
-            )
-        }
-        if (isBackgroundColorChange) {
-            applyBackgroundColorNoSelection(
-                binding.contentEditText,
-                start,
-                end,
-                Color.parseColor(backgroundColor)
-            )
-        }
-
-        if (isTextSizeChange) {
-            applyTextSizeNoSelection(
-                binding.contentEditText,
-                start,
-                end,
-                textSize
-            )
-        }
-    }
-
-    fun setupFormatBarListeners() {
-        binding.boldBtn.setOnClickListener {
-            toggleBackgroundFormattingButton(binding.boldBtn, isBold)
-            applyStyle(Typeface.BOLD)
-            isBold = !isBold
-        }
-
-        binding.italicBtn.setOnClickListener {
-            toggleBackgroundFormattingButton(binding.italicBtn, isItalic)
-            applyStyle(Typeface.ITALIC)
-            isItalic = !isItalic
-        }
-
-        binding.underlinedBtn.setOnClickListener {
-            toggleBackgroundFormattingButton(binding.underlinedBtn, isUnderlined)
-            applyUnderline()
-            isUnderlined = !isUnderlined
-        }
-
-        binding.strikethroughBtn.setOnClickListener {
-            toggleBackgroundFormattingButton(binding.strikethroughBtn, isStrikethrough)
-            applyStrikethrough()
-            isStrikethrough = !isStrikethrough
-        }
-
-        binding.colorFillBtn.setOnClickListener {
-            showBackgroundColorPickerDialog()
-        }
-
-        binding.colorTextBtn.setOnClickListener {
-            showTextColorPicker()
-        }
-
-        binding.formatSizeBtn.setOnClickListener {
-            showAdjustTextSizeDialog()
-        }
-    }
-
-    private fun toggleBackgroundFormattingButton(imageView: ImageView, isActive: Boolean) {
-        if (!isActive) {
-            setActiveBackgroundFormattingButton(imageView)
-        } else {
-            imageView.background = null
-        }
-    }
-
-    private fun setActiveBackgroundFormattingButton(imageView: ImageView) {
-        if (imageView == binding.colorFillBtn) {
-
-        } else if (imageView == binding.colorTextBtn) {
-
-        } else imageView.setBackgroundColor(Color.parseColor("#afaeac"))
-    }
-
-
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        menuInflater.inflate(R.menu.activity_add_option_menu, menu)
-        return super.onCreateOptionsMenu(menu)
-    }
+    //endregion
 
     //region show dialog
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        when (item.itemId) {
-            R.id.action_save -> {
-                updateTask(
-                    task.copy(
-                        title = binding.titleEditText.text.toString(),
-                        content = binding.contentEditText.text.toString(),
-                        lastEdit = formatDate(Date()),
-                        color = selectedColor,
-                        darkColor = darkSelectedColor
-                    )
-                )
-                original = task.copy()
-                undoStack.clear()
-
-                addViewModel.update(task)
-                Toast.makeText(this, "update successfully", Toast.LENGTH_SHORT).show()
-            }
-
-            R.id.activity_add_action_delete -> {
-                val categoryBuilder = AlertDialog.Builder(this)
-                categoryBuilder.setMessage("The ${task.title} note will be deleted. Are you sure ?")
-                categoryBuilder.setPositiveButton("Delete") { dialog, which ->
-                    taskViewModel.deleteTask(task)
-                    onBackPressedDispatcher.onBackPressed()
-                }
-                    .setNegativeButton("Cancel") { dialog, _ -> dialog.dismiss() }
-                categoryBuilder.create().show()
-            }
-
-            android.R.id.home -> {
-                onBackPressedDispatcher.onBackPressed()
-            }
-
-            R.id.action_undo -> {
-                if (undoStack.isNotEmpty()) {
-                    val previous = undoStack.pop()
-                    isChangingCharacter = true
-                    binding.contentEditText.setText(previous)
-                    binding.contentEditText.setSelection(previous.length)
-                    isChangingCharacter = false
-                }
-            }
-
-            R.id.activity_add_action_undo_all -> {
-                task = original.copy()
-                isChangingCharacter = true
-                binding.contentEditText.setText(SpannableString(Html.fromHtml(task.content, Html.FROM_HTML_MODE_LEGACY)))
-                binding.titleEditText.setText(task.title)
-                undoStack.clear()
-                isChangingCharacter = false
-            }
-
-            R.id.activity_add_action_share -> {
-                if (!binding.contentEditText.text.isNullOrBlank()) {
-                    val sendIntent: Intent = Intent().apply {
-                        action = Intent.ACTION_SEND
-                        putExtra(
-                            Intent.EXTRA_TEXT,
-                            "Title : ${
-                                if (binding.titleEditText.text.isNullOrBlank()) "Untitled"
-                                else binding.titleEditText.text.toString()
-                            } \n" + "Content : ${binding.contentEditText.text}"
-                        )
-                        type = "text/plain"
-                    }
-
-                    val shareIntent = Intent.createChooser(sendIntent, null)
-                    startActivity(shareIntent)
-                }
-            }
-
-            R.id.activity_add_action_colorize -> {
-                showColorPickerDialog()
-            }
-
-            R.id.activity_add_action_read_mode -> {
-                binding.readOnlyToolbar.setBackgroundColor(Color.parseColor(task.darkColor))
-                binding.titleEditText.isEnabled = false
-                binding.contentEditText.isEnabled = false
-                binding.contentEditText.setTextColor(ContextCompat.getColor(this, R.color.black))
-                binding.titleEditText.setTextColor(ContextCompat.getColor(this, R.color.black))
-
-                binding.appBarLayout.visibility = View.INVISIBLE
-                binding.readOnlyToolbar.visibility = View.VISIBLE
-
-                val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-                imm.hideSoftInputFromWindow(binding.contentEditText.windowToken, 0)
-            }
-
-            R.id.activity_add_action_categorize -> {
-                createCategorizeDialog()
-            }
-
-            R.id.activity_add_action_show_info -> {
-                showInformationDialog()
-            }
-
-            R.id.activity_add_action_search -> {
-                binding.activityAddSearchField.setBackgroundColor(Color.parseColor(task.darkColor))
-                binding.appBarLayout.visibility = View.INVISIBLE
-                binding.readOnlyToolbar.visibility = View.INVISIBLE
-                binding.activityAddSearchEditText.requestFocus()
-            }
-
-            R.id.activity_add_action_export -> {
-                exportNote()
-            }
-
-            R.id.activity_add_action_format_bar -> {
-                if (binding.formatBar.visibility == View.GONE) binding.formatBar.visibility =
-                    View.VISIBLE
-                else binding.formatBar.visibility = View.GONE
-            }
-        }
-        return super.onOptionsItemSelected(item)
-    }
-
-    fun setupReadonlyToolbar() {
-        binding.activityAddBackBtnReadonly.setOnClickListener {
-            binding.appBarLayout.visibility = View.VISIBLE
-            binding.titleEditText.isEnabled = true
-            binding.contentEditText.isEnabled = true
-        }
-
-        binding.readonlyEdit.setOnClickListener {
-            binding.appBarLayout.visibility = View.VISIBLE
-            binding.titleEditText.isEnabled = true
-            binding.contentEditText.isEnabled = true
-            binding.contentEditText.requestFocus()
-        }
-
-        binding.readonlyDownload.setOnClickListener {
-            exportNote()
-        }
-
-    }
-
-    private fun exportNote() {
-        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
-            addCategory(Intent.CATEGORY_OPENABLE)
-            type = "text/plain"
-            putExtra(Intent.EXTRA_TITLE, "${title}.txt")
-        }
-        createDocumentLauncher.launch(intent)
-    }
 
     private fun showColorPickerDialog() {
         val view = layoutInflater.inflate(R.layout.pick_color, null)
@@ -679,7 +283,7 @@ class AddActivity : AppCompatActivity() {
             columnCount = 8
         }
         var localTextOpacity = 100
-        var localSelectedColor: String = default_color_text
+        var localSelectedColor: String = DEFAULT_COLOR_TEXT
 
         val selectColorTitle = view.findViewById<TextView>(R.id.select_color_title).apply {
             setTextColor(Color.parseColor(colorText))
@@ -778,12 +382,12 @@ class AddActivity : AppCompatActivity() {
             }
             .setPositiveButton("OK") { dlg, _ ->
                 if (isReset) {
-                    colorText = default_color_text
+                    colorText = DEFAULT_COLOR_TEXT
                     binding.colorTextBtn.background = null
                     isColorTextChange = false
                 } else {
                     colorText = getColorWithOpacity(localSelectedColor, seekBar.progress / 100f)
-                    Toast.makeText(this@AddActivity, colorText, Toast.LENGTH_SHORT).show()
+                    //Toast.makeText(this@AddActivity, colorText, Toast.LENGTH_SHORT).show()
                     textColorOpacity = localTextOpacity
                     binding.colorTextBtn.setBackgroundColor(Color.parseColor(colorText))
                     isColorTextChange = true
@@ -811,12 +415,12 @@ class AddActivity : AppCompatActivity() {
                     plusText.visibility = View.INVISIBLE
                 }
 
-                localSelectedColor = default_color_text
+                localSelectedColor = DEFAULT_COLOR_TEXT
                 selectColorTitle.setTextColor(getColor(R.color.black))
                 localTextOpacity = 100
                 seekBar.progress = localTextOpacity
                 isReset = true
-                Toast.makeText(this@AddActivity, "active", Toast.LENGTH_SHORT).show()
+                //Toast.makeText(this@AddActivity, "active", Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -931,13 +535,13 @@ class AddActivity : AppCompatActivity() {
             }
             .setPositiveButton("OK") { dlg, _ ->
                 if (isReset) {
-                    backgroundColor = default_background_color
+                    backgroundColor = DEFAULT_COLOR_BACKGROUND
                     binding.colorFillBtn.background = null
                     isBackgroundColorChange = false
                 } else {
                     backgroundColor =
                         getColorWithOpacity(localSelectedColor, seekBar.progress / 100f)
-                    Toast.makeText(this@AddActivity, colorText, Toast.LENGTH_SHORT).show()
+                    //Toast.makeText(this@AddActivity, colorText, Toast.LENGTH_SHORT).show()
                     backgroundColorOpacity = localBackgroundOpacity
                     binding.colorFillBtn.setBackgroundColor(Color.parseColor(backgroundColor))
                     isBackgroundColorChange = true
@@ -963,12 +567,12 @@ class AddActivity : AppCompatActivity() {
                     plusText.visibility = View.INVISIBLE
                 }
 
-                localSelectedColor = default_background_color
+                localSelectedColor = DEFAULT_COLOR_BACKGROUND
                 selectColorTitle.setBackgroundColor(getColor(R.color.transparent))
                 localBackgroundOpacity = 100
                 seekBar.progress = localBackgroundOpacity
                 isReset = true
-                Toast.makeText(this@AddActivity, "active", Toast.LENGTH_SHORT).show()
+                //Toast.makeText(this@AddActivity, "active", Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -1102,104 +706,40 @@ class AddActivity : AppCompatActivity() {
 
     //endregion
 
-    fun checkTextStyle() {
-        val start = binding.contentEditText.selectionStart
-        val text = binding.contentEditText.text as Spannable
+    //region style utilities
 
-        val spans = text.getSpans(start, start, CharacterStyle::class.java)
+    private fun highlightText(editText: EditText, textToHighlight: String) {
+        val spannableString = editText.text
 
-        val styles = mutableListOf<ImageView>()
 
+        val spans =
+            spannableString.getSpans(0, spannableString.length, BackgroundColorSpan::class.java)
         for (span in spans) {
-            when (span) {
-                is StyleSpan -> {
-                    if (span.style == Typeface.BOLD) {
-                        styles.add(binding.boldBtn)
-                        isBold = true
-                    }
-
-                    if (span.style == Typeface.ITALIC) {
-                        isItalic = true
-                        styles.add(binding.italicBtn)
-                    }
-
-                }
-
-                is UnderlineSpan -> {
-                    styles.add(binding.underlinedBtn)
-                    isUnderlined = true
-                }
-
-                is StrikethroughSpan -> {
-                    styles.add(binding.strikethroughBtn)
-                    isStrikethrough = true
-                }
-
-                is ForegroundColorSpan -> {
-                    styles.add(binding.colorTextBtn)
-                    val spanColor = span.foregroundColor
-                    val hexColor = String.format("#%08X", spanColor)
-                    binding.colorTextBtn.setBackgroundColor(Color.parseColor(hexColor))
-                    colorText = hexColor
-                    isColorTextChange = true
-                }
-
-                is BackgroundColorSpan -> {
-                    styles.add(binding.colorFillBtn)
-                    val spanColor = span.backgroundColor
-                    val hexColor = String.format("#%08X", spanColor)
-                    binding.colorFillBtn.setBackgroundColor(Color.parseColor(hexColor))
-                    backgroundColor = hexColor
-                    isBackgroundColorChange = true
-                }
-
-                is AbsoluteSizeSpan -> {
-                    styles.add(binding.formatSizeBtn)
-                    textSize = span.size
-                    isTextSizeChange = true
-                }
-
-
+            if (spannableString.getSpanStart(span) != -1 && spannableString.getSpanEnd(span) != -1) {
+                spannableString.removeSpan(span)
             }
         }
-
-        styles.forEach {
-            setActiveBackgroundFormattingButton(it)
+        if (textToHighlight.isBlank()) {
+            val s = SpannableString(Html.fromHtml(task.content, Html.FROM_HTML_MODE_LEGACY))
+            isChangingCharacter = true
+            binding.contentEditText.setText(s)
+            isChangingCharacter = false
+            return
         }
 
-        if (binding.italicBtn !in styles) {
-            binding.italicBtn.background = null
-            isItalic = false
-        }
-        if (binding.boldBtn !in styles) {
-            binding.boldBtn.background = null
-            isBold = false
-        }
-        if (binding.underlinedBtn !in styles) {
-            isUnderlined = false
-            binding.underlinedBtn.background = null
-        }
-        if (binding.strikethroughBtn !in styles) {
-            isStrikethrough = false
-            binding.strikethroughBtn.background = null
-        }
+        var startIndex = spannableString.indexOf(textToHighlight)
+        while (startIndex >= 0) {
+            val endIndex = startIndex + textToHighlight.length
 
-        if (binding.colorTextBtn !in styles) {
-            binding.colorTextBtn.background = null
-            isColorTextChange = false
-        }
+            spannableString.setSpan(
+                BackgroundColorSpan(Color.YELLOW),
+                startIndex,
+                endIndex,
+                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+            )
 
-        if (binding.colorFillBtn !in styles) {
-            binding.colorFillBtn.background = null
-            isBackgroundColorChange = false
+            startIndex = spannableString.indexOf(textToHighlight, endIndex)
         }
-
-        if(binding.formatSizeBtn !in styles) {
-            binding.formatSizeBtn.background = null
-            textSize = 18
-            isTextSizeChange = false
-        }
-
     }
 
     private fun resetCurrentColor() {
@@ -1225,30 +765,309 @@ class AddActivity : AppCompatActivity() {
         cDarkSelectedColor = darkSelectedColor
     }
 
-    override fun onDestroy() {
-        setTextLayoutBackground(TASK_DEFAULT_COLOR)
-        super.onDestroy()
-    }
-
-    override fun onStop() {
-        updateTask(task.copy(lastEdit = formatDate(Date())))
-        taskViewModel.updateTask(task)
-        Toast.makeText(this, "Saved", Toast.LENGTH_LONG).show()
-        super.onStop()
-    }
-
-    fun updateTask(t: Task) {
-        task = t.copy(
-            content = convertSpannableToHtml()
-        )
-    }
-
-    fun convertSpannableToHtml(): String {
+    private fun convertSpannableToHtml(): String {
         val span = binding.contentEditText.text as Spannable
         return Html.toHtml(span, Html.TO_HTML_PARAGRAPH_LINES_CONSECUTIVE)
     }
 
-    //region apply style
+    //endregion
+
+    //region menu
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.activity_add_option_menu, menu)
+        return super.onCreateOptionsMenu(menu)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.action_save -> {
+                updateTask(
+                    task.copy(
+                        title = binding.titleEditText.text.toString(),
+                        content = binding.contentEditText.text.toString(),
+                        lastEdit = formatDate(Date()),
+                        color = selectedColor,
+                        darkColor = darkSelectedColor
+                    )
+                )
+                original = task.copy()
+                undoStack.clear()
+
+                addViewModel.update(task)
+                Toast.makeText(this, "update successfully", Toast.LENGTH_SHORT).show()
+            }
+
+            R.id.activity_add_action_delete -> {
+                val categoryBuilder = AlertDialog.Builder(this)
+                categoryBuilder.setMessage("The ${task.title} note will be deleted. Are you sure ?")
+                categoryBuilder.setPositiveButton("Delete") { dialog, which ->
+                    taskViewModel.deleteTask(task)
+                    onBackPressedDispatcher.onBackPressed()
+                }
+                    .setNegativeButton("Cancel") { dialog, _ -> dialog.dismiss() }
+                categoryBuilder.create().show()
+            }
+
+            android.R.id.home -> {
+                onBackPressedDispatcher.onBackPressed()
+            }
+
+            R.id.action_undo -> {
+                if (undoStack.isNotEmpty()) {
+                    val previous = undoStack.pop()
+                    isChangingCharacter = true
+                    binding.contentEditText.setText(previous)
+                    binding.contentEditText.setSelection(previous.length)
+                    isChangingCharacter = false
+                }
+            }
+
+            R.id.activity_add_action_undo_all -> {
+                task = original.copy()
+                isChangingCharacter = true
+                binding.contentEditText.setText(
+                    SpannableString(
+                        Html.fromHtml(
+                            task.content,
+                            Html.FROM_HTML_MODE_LEGACY
+                        )
+                    )
+                )
+                binding.titleEditText.setText(task.title)
+                undoStack.clear()
+                isChangingCharacter = false
+            }
+
+            R.id.activity_add_action_share -> {
+                if (!binding.contentEditText.text.isNullOrBlank()) {
+                    val sendIntent: Intent = Intent().apply {
+                        action = Intent.ACTION_SEND
+                        putExtra(
+                            Intent.EXTRA_TEXT,
+                            "Title : ${
+                                if (binding.titleEditText.text.isNullOrBlank()) "Untitled"
+                                else binding.titleEditText.text.toString()
+                            } \n" + "Content : ${binding.contentEditText.text}"
+                        )
+                        type = "text/plain"
+                    }
+
+                    val shareIntent = Intent.createChooser(sendIntent, null)
+                    startActivity(shareIntent)
+                }
+            }
+
+            R.id.activity_add_action_colorize -> {
+                showColorPickerDialog()
+            }
+
+            R.id.activity_add_action_read_mode -> {
+                binding.readOnlyToolbar.setBackgroundColor(Color.parseColor(task.darkColor))
+                binding.titleEditText.isEnabled = false
+                binding.contentEditText.isEnabled = false
+                binding.contentEditText.setTextColor(ContextCompat.getColor(this, R.color.black))
+                binding.titleEditText.setTextColor(ContextCompat.getColor(this, R.color.black))
+
+                binding.appBarLayout.visibility = View.INVISIBLE
+                binding.readOnlyToolbar.visibility = View.VISIBLE
+
+                val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                imm.hideSoftInputFromWindow(binding.contentEditText.windowToken, 0)
+            }
+
+            R.id.activity_add_action_categorize -> {
+                createCategorizeDialog()
+            }
+
+            R.id.activity_add_action_show_info -> {
+                showInformationDialog()
+            }
+
+            R.id.activity_add_action_search -> {
+                binding.activityAddSearchField.setBackgroundColor(Color.parseColor(task.darkColor))
+                binding.appBarLayout.visibility = View.INVISIBLE
+                binding.readOnlyToolbar.visibility = View.INVISIBLE
+                binding.activityAddSearchEditText.requestFocus()
+            }
+
+            R.id.activity_add_action_export -> {
+                exportNote()
+            }
+
+            R.id.activity_add_action_format_bar -> {
+                if (binding.formatBar.visibility == View.GONE) binding.formatBar.visibility =
+                    View.VISIBLE
+                else binding.formatBar.visibility = View.GONE
+            }
+        }
+        return super.onOptionsItemSelected(item)
+    }
+    //endregion
+
+    //region setup
+    private fun setListeners() {
+        binding.cancelBtn.setOnClickListener {
+            binding.formatBar.visibility = View.GONE
+        }
+
+        binding.activityAddBackBtn.setOnClickListener {
+            binding.appBarLayout.visibility = View.VISIBLE
+            binding.activityAddSearchEditText.setQuery("", false)
+        }
+
+        binding.activityAddSearchEditText.setOnQueryTextFocusChangeListener { v, hasFocus ->
+            if (!hasFocus) {
+                binding.activityAddSearchEditText.setQuery("", false)
+                binding.appBarLayout.visibility = View.VISIBLE
+            }
+        }
+
+        binding.activityAddSearchEditText.setOnQueryTextListener(
+            object : SearchView.OnQueryTextListener {
+                override fun onQueryTextSubmit(query: String?): Boolean {
+                    return true
+                }
+
+                override fun onQueryTextChange(newText: String?): Boolean {
+                    highlightText(binding.contentEditText, newText ?: "")
+                    return true
+                }
+
+            }
+        )
+
+        binding.titleEditText.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
+
+            }
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+
+
+                updateTask(task.copy(title = s.toString()))
+
+            }
+
+            override fun afterTextChanged(s: Editable?) {
+            }
+        })
+
+        val textWatcher = object : TextWatcher {
+            var startIndex: Int? = null
+            var endIndex: Int? = null
+            private var previousText: Spannable? = null
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
+                startIndex = start
+                endIndex = start + after
+                previousText = if (s is Spannable) {
+                    SpannableStringBuilder(s)
+                } else {
+                    SpannableStringBuilder.valueOf(s)
+                }
+            }
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                updateTask(task.copy(content = s.toString()))
+            }
+
+            override fun afterTextChanged(s: Editable?) {
+                if (s != null) {
+                    if (s.toString() != previousText.toString() && !isChangingCharacter) {
+                        undoStack.push(previousText)
+                    }
+
+                    if (isBold || isItalic || isUnderlined || isStrikethrough ||
+                        isColorTextChange || isBackgroundColorChange || isTextSizeChange
+                    ) {
+                        val start = startIndex!!
+                        val end = endIndex!!
+                        if (start < end) {
+                            removeTextWatcher()
+                            formatting(start, end)
+                            addTextWatcher()
+                        }
+                    }
+                }
+            }
+
+            private fun removeTextWatcher() {
+                binding.contentEditText.removeTextChangedListener(this)
+            }
+
+            private fun addTextWatcher() {
+                binding.contentEditText.addTextChangedListener(this)
+            }
+
+        }
+
+        binding.contentEditText.addTextChangedListener(textWatcher)
+
+        binding.contentEditText.setOnClickListener {
+            checkTextStyle()
+        }
+    }
+
+    private fun setupFormatBarListeners() {
+        binding.boldBtn.setOnClickListener {
+            toggleBackgroundFormattingButton(binding.boldBtn, isBold)
+            applyStyle(Typeface.BOLD)
+            isBold = !isBold
+        }
+
+        binding.italicBtn.setOnClickListener {
+            toggleBackgroundFormattingButton(binding.italicBtn, isItalic)
+            applyStyle(Typeface.ITALIC)
+            isItalic = !isItalic
+        }
+
+        binding.underlinedBtn.setOnClickListener {
+            toggleBackgroundFormattingButton(binding.underlinedBtn, isUnderlined)
+            applyUnderline()
+            isUnderlined = !isUnderlined
+        }
+
+        binding.strikethroughBtn.setOnClickListener {
+            toggleBackgroundFormattingButton(binding.strikethroughBtn, isStrikethrough)
+            applyStrikethrough()
+            isStrikethrough = !isStrikethrough
+        }
+
+        binding.colorFillBtn.setOnClickListener {
+            showBackgroundColorPickerDialog()
+        }
+
+        binding.colorTextBtn.setOnClickListener {
+            showTextColorPicker()
+        }
+
+        binding.formatSizeBtn.setOnClickListener {
+            showAdjustTextSizeDialog()
+        }
+    }
+
+    fun setupReadonlyToolbar() {
+        binding.activityAddBackBtnReadonly.setOnClickListener {
+            binding.appBarLayout.visibility = View.VISIBLE
+            binding.titleEditText.isEnabled = true
+            binding.contentEditText.isEnabled = true
+        }
+
+        binding.readonlyEdit.setOnClickListener {
+            binding.appBarLayout.visibility = View.VISIBLE
+            binding.titleEditText.isEnabled = true
+            binding.contentEditText.isEnabled = true
+            binding.contentEditText.requestFocus()
+        }
+
+        binding.readonlyDownload.setOnClickListener {
+            exportNote()
+        }
+
+    }
+
+    //endregion
+
+    //region edit text style
     private fun applyStyle(style: Int) {
         val text = binding.contentEditText.text
         if (text is Spannable) {
@@ -1374,8 +1193,186 @@ class AddActivity : AppCompatActivity() {
             }
         }
     }
+
+    private fun checkTextStyle() {
+        val start = binding.contentEditText.selectionStart
+        val text = binding.contentEditText.text as Spannable
+
+        val spans = text.getSpans(start, start, CharacterStyle::class.java)
+
+        val styles = mutableListOf<ImageView>()
+
+        for (span in spans) {
+            when (span) {
+                is StyleSpan -> {
+                    if (span.style == Typeface.BOLD) {
+                        styles.add(binding.boldBtn)
+                        isBold = true
+                    }
+
+                    if (span.style == Typeface.ITALIC) {
+                        isItalic = true
+                        styles.add(binding.italicBtn)
+                    }
+
+                }
+
+                is UnderlineSpan -> {
+                    styles.add(binding.underlinedBtn)
+                    isUnderlined = true
+                }
+
+                is StrikethroughSpan -> {
+                    styles.add(binding.strikethroughBtn)
+                    isStrikethrough = true
+                }
+
+                is ForegroundColorSpan -> {
+                    styles.add(binding.colorTextBtn)
+                    val spanColor = span.foregroundColor
+                    val hexColor = String.format("#%08X", spanColor)
+                    binding.colorTextBtn.setBackgroundColor(Color.parseColor(hexColor))
+                    colorText = hexColor
+                    isColorTextChange = true
+                }
+
+                is BackgroundColorSpan -> {
+                    styles.add(binding.colorFillBtn)
+                    val spanColor = span.backgroundColor
+                    val hexColor = String.format("#%08X", spanColor)
+                    binding.colorFillBtn.setBackgroundColor(Color.parseColor(hexColor))
+                    backgroundColor = hexColor
+                    isBackgroundColorChange = true
+                }
+
+                is AbsoluteSizeSpan -> {
+                    styles.add(binding.formatSizeBtn)
+                    textSize = span.size
+                    isTextSizeChange = true
+                }
+
+
+            }
+        }
+
+        styles.forEach {
+            setActiveBackgroundFormattingButton(it)
+        }
+
+        if (binding.italicBtn !in styles) {
+            binding.italicBtn.background = null
+            isItalic = false
+        }
+        if (binding.boldBtn !in styles) {
+            binding.boldBtn.background = null
+            isBold = false
+        }
+        if (binding.underlinedBtn !in styles) {
+            isUnderlined = false
+            binding.underlinedBtn.background = null
+        }
+        if (binding.strikethroughBtn !in styles) {
+            isStrikethrough = false
+            binding.strikethroughBtn.background = null
+        }
+
+        if (binding.colorTextBtn !in styles) {
+            binding.colorTextBtn.background = null
+            isColorTextChange = false
+        }
+
+        if (binding.colorFillBtn !in styles) {
+            binding.colorFillBtn.background = null
+            isBackgroundColorChange = false
+        }
+
+        if (binding.formatSizeBtn !in styles) {
+            binding.formatSizeBtn.background = null
+            textSize = 18
+            isTextSizeChange = false
+        }
+
+    }
+
+    private fun formatting(start: Int, end: Int) {
+        if (isBold) {
+            applyBoldNoSelection(
+                binding.contentEditText,
+                start,
+                end
+            )
+        }
+
+        if (isItalic) {
+            applyItalicNoSelection(
+                binding.contentEditText,
+                start,
+                end
+            )
+        }
+
+        if (isUnderlined) {
+            applyUnderlineNoSelection(
+                binding.contentEditText,
+                start,
+                end
+            )
+        }
+
+        if (isStrikethrough) {
+            applyStrikethroughNoSelection(
+                binding.contentEditText,
+                start,
+                end
+            )
+        }
+
+        if (isColorTextChange) {
+            applyForegroundColorNoSelection(
+                binding.contentEditText,
+                start,
+                end,
+                Color.parseColor(colorText)
+            )
+        }
+        if (isBackgroundColorChange) {
+            applyBackgroundColorNoSelection(
+                binding.contentEditText,
+                start,
+                end,
+                Color.parseColor(backgroundColor)
+            )
+        }
+
+        if (isTextSizeChange) {
+            applyTextSizeNoSelection(
+                binding.contentEditText,
+                start,
+                end,
+                textSize
+            )
+        }
+    }
+
+    private fun toggleBackgroundFormattingButton(imageView: ImageView, isActive: Boolean) {
+        if (!isActive) {
+            setActiveBackgroundFormattingButton(imageView)
+        } else {
+            imageView.background = null
+        }
+    }
+
+    private fun setActiveBackgroundFormattingButton(imageView: ImageView) {
+        if (imageView == binding.colorFillBtn) {
+
+        } else if (imageView == binding.colorTextBtn) {
+
+        } else imageView.setBackgroundColor(Color.parseColor("#afaeac"))
+    }
+
     //endregion
 
+    //region I/O
     private val createDocumentLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == Activity.RESULT_OK) {
@@ -1395,5 +1392,38 @@ class AddActivity : AppCompatActivity() {
             e.printStackTrace()
         }
     }
+
+
+    private fun exportNote() {
+        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "text/plain"
+            putExtra(Intent.EXTRA_TITLE, "${title}.txt")
+        }
+        createDocumentLauncher.launch(intent)
+    }
+    //endregion
+
+    //region function utilities
+    fun updateTask(t: Task) {
+        task = t.copy(
+            content = convertSpannableToHtml()
+        )
+    }
+    //endregion
+
+    //region activity life cycle
+    override fun onDestroy() {
+        setTextLayoutBackground(TASK_DEFAULT_COLOR)
+        super.onDestroy()
+    }
+
+    override fun onStop() {
+        updateTask(task.copy(lastEdit = formatDate(Date())))
+        taskViewModel.updateTask(task)
+        if (original != task) Toast.makeText(this, "Saved", Toast.LENGTH_LONG).show()
+        super.onStop()
+    }
+    //endregion
 
 }
