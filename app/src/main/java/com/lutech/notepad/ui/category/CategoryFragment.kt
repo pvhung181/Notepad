@@ -7,6 +7,7 @@ import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
@@ -41,7 +42,7 @@ class CategoryFragment : Fragment(), MenuProvider {
         init()
         setupRecyclerView()
         setListeners()
-
+        setupDragItem()
         return root
     }
 
@@ -110,6 +111,8 @@ class CategoryFragment : Fragment(), MenuProvider {
         super.onViewCreated(view, savedInstanceState)
         activity?.addMenuProvider(this, viewLifecycleOwner)
         activity?.setTitle(R.string.categories)
+        (activity as AppCompatActivity).supportActionBar?.subtitle = null
+
     }
 
     override fun onDestroyView() {

@@ -16,6 +16,7 @@ import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModelProvider
@@ -50,19 +51,23 @@ class TaskAdapter(
         private val title: TextView = itemView.findViewById(id.task_title)
         private val lastEdit: TextView = itemView.findViewById(id.task_last_edit)
         val item: View = itemView.findViewById(id.note_item)
+
         //val background: View = itemView.findViewById(id.task_background)
         val overlay: View = itemView.findViewById(id.view_overlay)
 
         fun setData(task: Task) {
-            if(task.title.isBlank()) {
-                if(task.content.isNotEmpty()) {
-                    title.text = SpannableString(Html.fromHtml(task.content, Html.FROM_HTML_MODE_LEGACY)).toString()
-                }
-                else {
+            if (task.title.isBlank()) {
+                if (task.content.isNotEmpty()) {
+                    title.text = SpannableString(
+                        Html.fromHtml(
+                            task.content,
+                            Html.FROM_HTML_MODE_LEGACY
+                        )
+                    ).toString()
+                } else {
                     title.text = "Untitled"
                 }
-            }
-            else {
+            } else {
                 title.text = task.title
             }
             lastEdit.text = task.lastEdit
@@ -122,7 +127,8 @@ class TaskAdapter(
                                 AlertDialog.Builder(activity)
                                     .setMessage("Delete the selected notes?")
                                     .setNegativeButton("Cancel") { dlg, _ -> dlg.dismiss() }
-                                    .setPositiveButton("OK") {dlg, _ ->
+                                    .setPositiveButton("OK") { dlg, _ ->
+                                        Toast.makeText(activity, "Deleted notes (${selectList.size})", Toast.LENGTH_SHORT).show()
                                         for (s in selectList) {
                                             tasks.remove(s)
                                             //update is_deleted = true not delete
@@ -133,7 +139,6 @@ class TaskAdapter(
                                         dlg.dismiss()
                                     }
                                     .create().show()
-
 
 
                             }
@@ -191,14 +196,13 @@ class TaskAdapter(
             }
         }
 
-        holder.overlay.visibility = if(isSelectAll) View.VISIBLE else View.INVISIBLE
+        holder.overlay.visibility = if (isSelectAll) View.VISIBLE else View.INVISIBLE
     }
 
     fun setData(tasks: MutableList<Task>) {
         this.tasks = tasks
         notifyDataSetChanged()
     }
-
 
 
     private fun clickItem(holder: ViewHolder): Unit {

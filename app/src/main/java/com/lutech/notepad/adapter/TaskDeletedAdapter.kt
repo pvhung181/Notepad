@@ -10,6 +10,7 @@ import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.LifecycleOwner
@@ -125,6 +126,7 @@ class TaskDeletedAdapter(
                                     .setMessage("Are you sure that you want to delete the selected notes ? The notes will be deleted permanently")
                                     .setNegativeButton("Cancel") { dlg, _ -> dlg.dismiss() }
                                     .setPositiveButton("OK") {dlg, _ ->
+                                        Toast.makeText(activity, "Deleted notes (${selectList.size})", Toast.LENGTH_SHORT).show()
                                         for (s in selectList) {
                                             tasks.remove(s)
                                             mainViewModel?.deleteTask(s)

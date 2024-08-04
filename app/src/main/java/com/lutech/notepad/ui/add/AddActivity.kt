@@ -22,6 +22,7 @@ import android.text.style.ForegroundColorSpan
 import android.text.style.StrikethroughSpan
 import android.text.style.StyleSpan
 import android.text.style.UnderlineSpan
+import android.util.Log
 import android.view.Gravity
 import android.view.Menu
 import android.view.MenuItem
@@ -150,12 +151,15 @@ class AddActivity : AppCompatActivity() {
             darkSelectedColor = task.darkColor
             original = task.copy()
             setCColor()
-            applyColor()
+            applyColorForNote()
         }
 
+        Log.i("TASK", task.content)
         binding.titleEditText.setText(task.title)
         val spanned: Spanned = Html.fromHtml(task.content, Html.FROM_HTML_MODE_LEGACY)
+        Log.i("TASK", spanned.toString())
         spannable = SpannableString(spanned)
+        Log.i("TASK", spannable.toString())
         binding.contentEditText.setText(spannable)
 
 
@@ -257,7 +261,7 @@ class AddActivity : AppCompatActivity() {
                 dlg.dismiss()
             }
             .setPositiveButton("OK") { dlg, _ ->
-                applyColor()
+                applyColorForNote()
                 setCColor()
                 updateTask(
                     task.copy(
@@ -711,7 +715,6 @@ class AddActivity : AppCompatActivity() {
     private fun highlightText(editText: EditText, textToHighlight: String) {
         val spannableString = editText.text
 
-
         val spans =
             spannableString.getSpans(0, spannableString.length, BackgroundColorSpan::class.java)
         for (span in spans) {
@@ -747,7 +750,7 @@ class AddActivity : AppCompatActivity() {
         darkSelectedColor = cDarkSelectedColor
     }
 
-    private fun applyColor() {
+    private fun applyColorForNote() {
         setTextLayoutBackground(selectedColor)
         binding.toolbar.setBackgroundColor(Color.parseColor(darkSelectedColor))
         binding.addLayout.setBackgroundColor(Color.parseColor(darkSelectedColor))
@@ -757,7 +760,6 @@ class AddActivity : AppCompatActivity() {
         val background = binding.textLayout.background as GradientDrawable
         background.setColor(Color.parseColor(color))
         binding.textLayout.background = background
-
     }
 
     private fun setCColor() {
@@ -984,7 +986,9 @@ class AddActivity : AppCompatActivity() {
                         if (start < end) {
                             removeTextWatcher()
                             formatting(start, end)
+
                             addTextWatcher()
+                            Toast.makeText(this@AddActivity, task.content, Toast.LENGTH_SHORT).show()
                         }
                     }
                 }
@@ -1393,7 +1397,6 @@ class AddActivity : AppCompatActivity() {
         }
     }
 
-
     private fun exportNote() {
         val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
@@ -1419,11 +1422,12 @@ class AddActivity : AppCompatActivity() {
     }
 
     override fun onStop() {
-        updateTask(task.copy(lastEdit = formatDate(Date())))
-        taskViewModel.updateTask(task)
-        if (original != task) Toast.makeText(this, "Saved", Toast.LENGTH_LONG).show()
+        if (original != task) {
+            Toast.makeText(this, "Saved", Toast.LENGTH_LONG).show()
+            updateTask(task.copy(lastEdit = formatDate(Date())))
+            taskViewModel.updateTask(task)
+        }
         super.onStop()
     }
     //endregion
-
 }

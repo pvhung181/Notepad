@@ -8,6 +8,7 @@ import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
@@ -46,6 +47,7 @@ class TrashFragment : Fragment(), MenuProvider {
         super.onViewCreated(view, savedInstanceState)
         activity?.addMenuProvider(this, viewLifecycleOwner)
         activity?.setTitle(R.string.trash)
+        (activity as AppCompatActivity).supportActionBar?.subtitle = null
     }
 
     override fun onDestroyView() {
