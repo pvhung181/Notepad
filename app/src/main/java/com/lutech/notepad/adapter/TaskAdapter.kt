@@ -32,6 +32,7 @@ import com.lutech.notepad.constants.TASK_DEFAULT_DARK_COLOR
 import com.lutech.notepad.constants.TASK_ID
 import com.lutech.notepad.constants.TASK_LAST_EDIT
 import com.lutech.notepad.constants.TASK_TITLE
+import com.lutech.notepad.listener.NoteItemClickListener
 import com.lutech.notepad.model.Task
 import com.lutech.notepad.ui.TaskViewModel
 import com.lutech.notepad.ui.add.AddActivity
@@ -39,9 +40,9 @@ import com.lutech.notepad.ui.add.AddActivity
 
 class TaskAdapter(
     var tasks: MutableList<Task> = mutableListOf(),
-    val activity: Activity
+    val activity: Activity,
+    val listener: NoteItemClickListener
 ) : RecyclerView.Adapter<TaskAdapter.ViewHolder>() {
-    var mainViewModel: TaskViewModel? = null
     var isEnable = false
     var isSelectAll = false
     var selectList = mutableListOf<Task>()
@@ -83,10 +84,6 @@ class TaskAdapter(
         val view = LayoutInflater.from(parent.context)
             .inflate(layout.task_item, parent, false)
 
-        mainViewModel =
-            ViewModelProvider(activity as FragmentActivity)[TaskViewModel::class.java]
-
-
         return ViewHolder(view)
     }
 
@@ -99,102 +96,25 @@ class TaskAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         holder.setData(tasks[position])
+        holder.item.setOnClickListener {
+            if (isEnable) {
+                clickItem(holder);
+            } else {
+                listener.setOnClickListener(tasks[position])
+            }
+        }
+
         holder.item.setOnLongClickListener {
             if (!isEnable) {
-                val callback: ActionMode.Callback = object : ActionMode.Callback {
-                    override fun onCreateActionMode(mode: ActionMode?, menu: Menu?): Boolean {
-                        val inflater = mode?.menuInflater
+                clickItem(holder)
+                listener.setOnLongClickListener()
 
-                        inflater?.inflate(R.menu.select_menu, menu)
-                        menu?.findItem(R.id.menu_delete)?.icon?.setTint(activity.getColor(R.color.white))
-                        menu?.findItem(R.id.menu_select_all)?.icon?.setTint(activity.getColor(R.color.white))
-
-                        return true
-                    }
-
-                    override fun onPrepareActionMode(mode: ActionMode?, menu: Menu?): Boolean {
-                        isEnable = true
-                        clickItem(holder)
-                        mainViewModel?.getText()?.observe(
-                            activity as LifecycleOwner
-                        ) { value -> mode?.title = String.format("%s Selected", value) }
-                        return true
-                    }
-
-                    override fun onActionItemClicked(mode: ActionMode?, item: MenuItem?): Boolean {
-                        when (item!!.itemId) {
-                            id.menu_delete -> {
-                                AlertDialog.Builder(activity)
-                                    .setMessage("Delete the selected notes?")
-                                    .setNegativeButton("Cancel") { dlg, _ -> dlg.dismiss() }
-                                    .setPositiveButton("OK") { dlg, _ ->
-                                        Toast.makeText(activity, "Deleted notes (${selectList.size})", Toast.LENGTH_SHORT).show()
-                                        for (s in selectList) {
-                                            tasks.remove(s)
-                                            //update is_deleted = true not delete
-                                            mainViewModel?.moveToTrash(s)
-
-                                        }
-                                        mode?.finish()
-                                        dlg.dismiss()
-                                    }
-                                    .create().show()
-
-
-                            }
-
-                            id.menu_select_all -> {
-                                if (selectList.size == tasks.size) {
-                                    isSelectAll = false
-                                    selectList.clear()
-                                } else {
-                                    isSelectAll = true
-                                    selectList.clear()
-                                    selectList.addAll(tasks)
-                                }
-                                mainViewModel?.setText(selectList.size.toString())
-                                notifyDataSetChanged()
-                            }
-                        }
-                        return true
-                    }
-
-                    override fun onDestroyActionMode(mode: ActionMode?) {
-
-                        isEnable = false
-                        isSelectAll = false
-
-
-
-                        selectList.clear()
-
-                        notifyDataSetChanged()
-                    }
-                }
-                activity.startActionMode(callback)
             } else {
                 clickItem(holder)
             }
             true
         }
-        holder.item.setOnClickListener {
-            if (isEnable) {
-                clickItem(holder);
-            } else {
-                val bundle = Bundle()
-                bundle.putInt(TASK_ID, tasks[position].taskId);
-                bundle.putString(TASK_TITLE, tasks[position].title)
-                bundle.putString(TASK_CONTENT, tasks[position].content)
-                bundle.putString(TASK_LAST_EDIT, tasks[position].lastEdit)
-                bundle.putString(TASK_CREATION_DATE, tasks[position].createDate)
-                bundle.putString(TASK_DEFAULT_COLOR, tasks[position].color)
-                bundle.putString(TASK_DEFAULT_DARK_COLOR, tasks[position].darkColor)
 
-                val it = Intent(activity, AddActivity::class.java)
-                it.putExtra(TASK, bundle)
-                activity.startActivity(it)
-            }
-        }
 
         holder.overlay.visibility = if (isSelectAll) View.VISIBLE else View.INVISIBLE
     }
@@ -205,7 +125,7 @@ class TaskAdapter(
     }
 
 
-    private fun clickItem(holder: ViewHolder): Unit {
+    private fun clickItem(holder: ViewHolder) {
 
         val s = tasks[holder.absoluteAdapterPosition]
 
@@ -217,9 +137,34 @@ class TaskAdapter(
             selectList.remove(s)
         }
 
-        mainViewModel?.setText(selectList.size.toString())
+        listener.setOnClickInSelectedMode()
+    }
 
+    fun toggleSelectAll() {
+        if (selectList.size == tasks.size) {
+            isSelectAll = false
+            selectList.clear()
+        } else {
+            isSelectAll = true
+            selectList.clear()
+            selectList.addAll(tasks)
+        }
+        notifyDataSetChanged()
+    }
 
+    fun destroySelectedList() {
+        isEnable = false
+        isSelectAll = false
+        selectList.clear()
+        notifyDataSetChanged()
+    }
+
+    fun deleteSelectedTasks() {
+        tasks.removeAll(selectList)
+        selectList.clear()
+        isEnable = false
+        isSelectAll = false
+        notifyDataSetChanged()
     }
 }
 
