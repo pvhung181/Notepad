@@ -15,6 +15,7 @@ const val CATEGORY_NAME = "category_name"
 const val CATEGORY_ID = "category_id"
 const val CATEGORY_ALL = "all"
 const val CATEGORY_NOT_ALL = "not_all"
+const val UNCATEGORIZED = "uncategorized"
 
 
 const val DEFAULT_COLOR_TEXT = "#000000"

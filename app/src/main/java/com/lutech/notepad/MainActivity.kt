@@ -192,8 +192,10 @@ class MainActivity : AppCompatActivity() {
 
 
         taskViewModel.categories.observe(this) {
+            subMenu?.clear()
+            subMenu?.add(Menu.NONE, R.id.nav_categories, Menu.NONE, getString(R.string.categories))?.setIcon(R.drawable.add_note_ic)
             it.forEachIndexed { index, category ->
-                subMenu?.removeItem(index)
+
                 subMenu?.add(Menu.NONE, index, Menu.NONE, category.categoryName)?.setIcon(R.drawable.tag_icon)
                 subMenu?.findItem(index)?.setOnMenuItemClickListener {
                     val bundle = Bundle().apply {

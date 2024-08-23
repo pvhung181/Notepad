@@ -1,46 +1,22 @@
 package com.lutech.notepad.adapter
 
-import android.app.Activity
-import android.app.AlertDialog
-import android.content.Intent
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
-import android.os.Bundle
 import android.text.Html
-import android.text.Spannable
 import android.text.SpannableString
-import android.view.ActionMode
 import android.view.LayoutInflater
-import android.view.Menu
-import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
-import android.widget.Toast
-import androidx.fragment.app.FragmentActivity
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.RecyclerView
-import com.lutech.notepad.R
 import com.lutech.notepad.R.id
 import com.lutech.notepad.R.layout
-import com.lutech.notepad.constants.TASK
-import com.lutech.notepad.constants.TASK_CONTENT
-import com.lutech.notepad.constants.TASK_CREATION_DATE
-import com.lutech.notepad.constants.TASK_DEFAULT_COLOR
-import com.lutech.notepad.constants.TASK_DEFAULT_DARK_COLOR
-import com.lutech.notepad.constants.TASK_ID
-import com.lutech.notepad.constants.TASK_LAST_EDIT
-import com.lutech.notepad.constants.TASK_TITLE
 import com.lutech.notepad.listener.NoteItemClickListener
 import com.lutech.notepad.model.Task
-import com.lutech.notepad.ui.TaskViewModel
-import com.lutech.notepad.ui.add.AddActivity
 
 
 class TaskAdapter(
     var tasks: MutableList<Task> = mutableListOf(),
-    val activity: Activity,
     val listener: NoteItemClickListener
 ) : RecyclerView.Adapter<TaskAdapter.ViewHolder>() {
     var isEnable = false

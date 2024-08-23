@@ -13,6 +13,7 @@ import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.RecyclerView
 import com.lutech.notepad.R
+import com.lutech.notepad.listener.CategoryDialogClickListener
 import com.lutech.notepad.model.Category
 import com.lutech.notepad.model.CategoryTaskCrossRef
 import com.lutech.notepad.model.Task
@@ -22,10 +23,8 @@ class CategoryDialogAdapter(
     var categories: MutableList<Category> = mutableListOf(),
     var checkedCategory: MutableList<Category> = mutableListOf(),
     val task: Task,
-    val activity: Activity
+    val listener: CategoryDialogClickListener
 ) : RecyclerView.Adapter<CategoryDialogAdapter.ViewHolder>() {
-
-    private lateinit var viewModel: TaskViewModel
 
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val categoryName: TextView = itemView.findViewById(R.id.dialog_category_name)
@@ -39,8 +38,7 @@ class CategoryDialogAdapter(
             if(isChecked) checkbox.isChecked = true
 
             checkbox.setOnClickListener {
-                if(checkbox.isChecked) viewModel.insertCategoryNote(CategoryTaskCrossRef(category.categoryId, task.taskId))
-                else viewModel.deleteCategoryNote(CategoryTaskCrossRef(category.categoryId, task.taskId))
+                listener.onCheckboxClick(category, checkbox.isChecked)
             }
 
         }
@@ -50,8 +48,6 @@ class CategoryDialogAdapter(
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.category_item_checkbox, parent, false)
-
-        viewModel = ViewModelProvider(activity as FragmentActivity)[TaskViewModel::class]
 
         return ViewHolder(view)
     }

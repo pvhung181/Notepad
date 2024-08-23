@@ -15,20 +15,16 @@ import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
-import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.lutech.notepad.R
 import com.lutech.notepad.adapter.TaskAdapter
 import com.lutech.notepad.constants.APP_SHARED_PREFERENCES
 import com.lutech.notepad.constants.CATEGORY_ALL
 import com.lutech.notepad.constants.CATEGORY_ID
 import com.lutech.notepad.constants.CATEGORY_NAME
-import com.lutech.notepad.constants.IS_FIRST_TIME
 import com.lutech.notepad.constants.TASK
 import com.lutech.notepad.constants.TASK_CONTENT
 import com.lutech.notepad.constants.TASK_CREATION_DATE
@@ -56,6 +52,65 @@ class HomeFragment : Fragment(), MenuProvider, NoteItemClickListener {
     private lateinit var recycler: RecyclerView
     private lateinit var allTasks: MutableList<Task>
     private lateinit var applicationPreferenceManager: ApplicationPreferenceManager
+
+    private val callback: ActionMode.Callback = object : ActionMode.Callback {
+        override fun onCreateActionMode(mode: ActionMode?, menu: Menu?): Boolean {
+            val inflater = mode?.menuInflater
+
+            inflater?.inflate(R.menu.select_menu, menu)
+            menu?.findItem(R.id.menu_delete)?.icon?.setTint(requireActivity().getColor(R.color.white))
+            menu?.findItem(R.id.menu_select_all)?.icon?.setTint(requireActivity().getColor(R.color.white))
+
+            return true
+        }
+
+        override fun onPrepareActionMode(mode: ActionMode?, menu: Menu?): Boolean {
+            adapter.isEnable = true
+            mainViewModel.getText().observe(this@HomeFragment ) { value ->
+                mode?.title = String.format("%s Selected", value)
+            }
+            return true
+        }
+
+        override fun onActionItemClicked(mode: ActionMode?, item: MenuItem?): Boolean {
+            when (item!!.itemId) {
+                R.id.menu_delete -> {
+                    android.app.AlertDialog.Builder(activity)
+                        .setMessage("Delete the selected notes?")
+                        .setNegativeButton("Cancel") { dlg, _ -> dlg.dismiss() }
+                        .setPositiveButton("OK") { dlg, _ ->
+                            Toast.makeText(
+                                activity,
+                                "Deleted notes (${adapter.selectList.size})",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            for (s in adapter.selectList) {
+                                adapter.tasks.remove(s)
+                                //update is_deleted = true not delete
+                                mainViewModel.moveToTrash(s)
+
+                            }
+                            mode?.finish()
+                            dlg.dismiss()
+                        }
+                        .create().show()
+
+
+                }
+
+                R.id.menu_select_all -> {
+                    adapter.toggleSelectAll()
+                    mainViewModel.setText(adapter.selectList.size.toString())
+                    adapter.notifyDataSetChanged()
+                }
+            }
+            return true
+        }
+
+        override fun onDestroyActionMode(mode: ActionMode?) {
+            adapter.destroySelectedList()
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -103,7 +158,7 @@ class HomeFragment : Fragment(), MenuProvider, NoteItemClickListener {
 
     private fun setupRecycler(categoryName: String?, id: Int?) {
         recycler = binding.recycler
-        adapter = TaskAdapter(activity = requireActivity(), listener = this)
+        adapter = TaskAdapter(listener = this)
         recycler.adapter = adapter
         if (categoryName == null || categoryName == CATEGORY_ALL) {
             homeViewModel.tasks.observe(viewLifecycleOwner) {
@@ -186,6 +241,12 @@ class HomeFragment : Fragment(), MenuProvider, NoteItemClickListener {
     override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
         when (menuItem.itemId) {
             R.id.action_sort -> showSortDialog()
+            R.id.activity_main_action_select_all -> {
+                requireActivity().startActionMode(callback)
+                adapter.toggleSelectAll()
+                mainViewModel.setText(adapter.selectList.size.toString())
+                adapter.notifyDataSetChanged()
+            }
         }
         return false
     }
@@ -267,64 +328,6 @@ class HomeFragment : Fragment(), MenuProvider, NoteItemClickListener {
     }
 
     override fun setOnLongClickListener() {
-        val callback: ActionMode.Callback = object : ActionMode.Callback {
-            override fun onCreateActionMode(mode: ActionMode?, menu: Menu?): Boolean {
-                val inflater = mode?.menuInflater
-
-                inflater?.inflate(R.menu.select_menu, menu)
-                menu?.findItem(R.id.menu_delete)?.icon?.setTint(requireActivity().getColor(R.color.white))
-                menu?.findItem(R.id.menu_select_all)?.icon?.setTint(requireActivity().getColor(R.color.white))
-
-                return true
-            }
-
-            override fun onPrepareActionMode(mode: ActionMode?, menu: Menu?): Boolean {
-                adapter.isEnable = true
-                mainViewModel.getText().observe(this@HomeFragment ) { value ->
-                    mode?.title = String.format("%s Selected", value)
-                }
-                return true
-            }
-
-            override fun onActionItemClicked(mode: ActionMode?, item: MenuItem?): Boolean {
-                when (item!!.itemId) {
-                    R.id.menu_delete -> {
-                        android.app.AlertDialog.Builder(activity)
-                            .setMessage("Delete the selected notes?")
-                            .setNegativeButton("Cancel") { dlg, _ -> dlg.dismiss() }
-                            .setPositiveButton("OK") { dlg, _ ->
-                                Toast.makeText(
-                                    activity,
-                                    "Deleted notes (${adapter.selectList.size})",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                                for (s in adapter.selectList) {
-                                    adapter.tasks.remove(s)
-                                    //update is_deleted = true not delete
-                                    mainViewModel.moveToTrash(s)
-
-                                }
-                                mode?.finish()
-                                dlg.dismiss()
-                            }
-                            .create().show()
-
-
-                    }
-
-                    R.id.menu_select_all -> {
-                        adapter.toggleSelectAll()
-                        mainViewModel.setText(adapter.selectList.size.toString())
-                        adapter.notifyDataSetChanged()
-                    }
-                }
-                return true
-            }
-
-            override fun onDestroyActionMode(mode: ActionMode?) {
-                adapter.destroySelectedList()
-            }
-        }
         requireActivity().startActionMode(callback)
     }
 

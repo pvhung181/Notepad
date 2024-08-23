@@ -62,6 +62,9 @@ import com.lutech.notepad.constants.TASK_TITLE
 import com.lutech.notepad.data.get64Colors
 import com.lutech.notepad.data.getColors
 import com.lutech.notepad.databinding.ActivityAddBinding
+import com.lutech.notepad.listener.CategoryDialogClickListener
+import com.lutech.notepad.model.Category
+import com.lutech.notepad.model.CategoryTaskCrossRef
 import com.lutech.notepad.model.Task
 import com.lutech.notepad.ui.TaskViewModel
 import com.lutech.notepad.utils.applyBackgroundColorNoSelection
@@ -82,7 +85,7 @@ import kotlin.math.max
 import kotlin.math.min
 
 
-class AddActivity : AppCompatActivity() {
+class AddActivity : AppCompatActivity(), CategoryDialogClickListener {
     lateinit var binding: ActivityAddBinding
 
     lateinit var toolbar: Toolbar
@@ -657,7 +660,7 @@ class AddActivity : AppCompatActivity() {
 
     }
 
-    fun showInformationDialog() {
+    private fun showInformationDialog() {
         val string = binding.contentEditText.text.toString()
 
         var message: String = "Words : ${string.countWord()}\n" +
@@ -677,7 +680,7 @@ class AddActivity : AppCompatActivity() {
             .create().show()
     }
 
-    fun createCategorizeDialog() {
+    private fun createCategorizeDialog() {
 
         val categoryBuilder = AlertDialog.Builder(this)
         categoryBuilder
@@ -686,9 +689,9 @@ class AddActivity : AppCompatActivity() {
 
 
         val recycleview = view.findViewById<RecyclerView>(R.id.recyclerView)
-        var cAdapter: CategoryDialogAdapter = CategoryDialogAdapter(
+        var cAdapter = CategoryDialogAdapter(
             task = task,
-            activity = this@AddActivity
+            listener = this
         )
         recycleview.adapter = cAdapter
 
@@ -1430,4 +1433,10 @@ class AddActivity : AppCompatActivity() {
         super.onStop()
     }
     //endregion
+
+
+    override fun onCheckboxClick(category: Category ,isChecked: Boolean) {
+        if(isChecked) taskViewModel.insertCategoryNote(CategoryTaskCrossRef(category.categoryId, task.taskId))
+        else taskViewModel.deleteCategoryNote(CategoryTaskCrossRef(category.categoryId, task.taskId))
+    }
 }

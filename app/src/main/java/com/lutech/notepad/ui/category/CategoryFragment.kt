@@ -7,6 +7,8 @@ import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
@@ -17,15 +19,18 @@ import com.lutech.notepad.R
 import com.lutech.notepad.adapter.CategoryAdapter
 import com.lutech.notepad.adapter.TaskAdapter
 import com.lutech.notepad.databinding.FragmentCategoryBinding
+import com.lutech.notepad.listener.CategoryItemClickListener
 import com.lutech.notepad.model.Category
+import com.lutech.notepad.ui.TaskViewModel
 import com.lutech.notepad.ui.home.HomeViewModel
 import java.util.Collections
 
-class CategoryFragment : Fragment(), MenuProvider {
+class CategoryFragment : Fragment(), MenuProvider, CategoryItemClickListener {
     private var _binding: FragmentCategoryBinding? = null
     private val binding get() = _binding!!
 
     private lateinit var categoryViewModel: CategoryViewModel
+    private lateinit var viewModel: TaskViewModel
 
     private lateinit var recycler: RecyclerView
     private lateinit var adapter: CategoryAdapter
@@ -49,11 +54,13 @@ class CategoryFragment : Fragment(), MenuProvider {
     private fun init() {
         categoryViewModel =
             ViewModelProvider(this)[CategoryViewModel::class.java]
+        viewModel =
+            ViewModelProvider(this)[TaskViewModel::class.java]
     }
 
     private fun setupRecyclerView() {
         recycler = binding.recyclerCategory
-        adapter = CategoryAdapter(activity = requireActivity())
+        adapter = CategoryAdapter(listener = this)
         recycler.adapter = adapter
         categoryViewModel.categories.observe(viewLifecycleOwner) {
             adapter.setCategory(it)
@@ -102,9 +109,31 @@ class CategoryFragment : Fragment(), MenuProvider {
     private fun setListeners() {
         binding.addBtn.setOnClickListener {
             categoryViewModel.insertCategory(Category(categoryName = binding.categoryEditText.text.toString()))
-            //binding.categoryEditText.text.clear()
-            binding.categoryEditText.requestFocus()
+            binding.categoryEditText.text.clear()
+            binding.categoryEditText.clearFocus()
         }
+    }
+
+    private fun showEditDialog(c: Category) {
+        val builder = AlertDialog.Builder(requireActivity())
+        val editText = EditText(activity)
+
+        editText.setText(c.categoryName)
+
+        val dialog = builder
+            .setTitle("Edit category name")
+            .setView(editText)
+            .setNegativeButton("Cancel") { dlg, _ -> dlg.dismiss() }
+            .setPositiveButton("Update") { dlg, _ ->
+                viewModel.updateCategory(c.copy(categoryName = editText.text.toString()))
+                dlg.dismiss()
+            }
+            .create()
+        dialog.show()
+    }
+
+    private fun showDeleteDialog(category: Category) {
+
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -126,6 +155,24 @@ class CategoryFragment : Fragment(), MenuProvider {
 
     override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
         return true
+    }
+
+    override fun onEditButtonClick(category: Category) {
+        showEditDialog(category)
+    }
+
+    override fun onDeleteButtonClick(category: Category) {
+        val builder = AlertDialog.Builder(requireActivity())
+
+        val dialog = builder
+            .setMessage("Delete category '${category.categoryName}'? Note from the category won't be deleted")
+            .setNegativeButton("Cancel") { dlg, _ -> dlg.dismiss() }
+            .setPositiveButton("Delete") { dlg, _ ->
+                viewModel.deleteCategory(category)
+                dlg.dismiss()
+            }
+            .create()
+        dialog.show()
     }
 
 }
